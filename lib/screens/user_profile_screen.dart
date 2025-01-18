@@ -29,21 +29,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _nameController.text = prefs.getString('name') ?? '';
-      
+
       // 性別の読み込みを修正
       _selectedGender = prefs.getString('gender');
-      if (_selectedGender == null) {
-        _selectedGender = '未設定';
-      }
-      
+      _selectedGender ??= '未設定';
+
       _ageController.text = prefs.getString('age') ?? '';
-      
+
       // 生年月日の読み込み
       String? birthdayString = prefs.getString('birthday');
       if (birthdayString != null) {
         _selectedBirthday = DateTime.parse(birthdayString);
       }
-      
+
       _exerciseHabit = prefs.getString('exerciseHabit');
       _sleepHoursController.text = prefs.getString('sleepHours') ?? '';
     });
@@ -52,7 +50,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   _saveProfile() async {
     if (_formKey.currentState!.validate()) {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // ユーザーモデルに合わせて保存
       User user = User(
         name: _nameController.text,
@@ -70,7 +68,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       await prefs.setString('birthday', user.birthday.toIso8601String());
       await prefs.setString('exerciseHabit', user.exerciseHabit);
       await prefs.setString('sleepHours', user.sleepHours.toString());
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('プロフィールを保存しました')),
       );
@@ -269,4 +267,4 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     _sleepHoursController.dispose();
     super.dispose();
   }
-} 
+}

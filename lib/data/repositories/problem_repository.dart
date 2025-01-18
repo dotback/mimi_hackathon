@@ -1,48 +1,41 @@
-import '../data/models/problem.dart';
+import '../../data/models/problem.dart';
 
 class ProblemRepository {
-  final List<Problem> _problems = [];
-
-  Future<List<Problem>> getAllProblems() async {
-    // シミュレートされた遅延
-    await Future.delayed(const Duration(milliseconds: 300));
-    return _problems;
+  Future<List<Problem>> getProblems() async {
+    return [
+      Problem(
+        id: '1',
+        title: '問題1',
+        description: 'これは問題1です',
+        category: ProblemCategory.memory,
+        difficulty: 1,
+      ),
+      Problem(
+        id: '2',
+        title: '問題2',
+        description: 'これは問題2です',
+        category: ProblemCategory.recall,
+        difficulty: 2,
+      ),
+      Problem(
+        id: '3',
+        title: '問題3',
+        description: 'これは問題3です',
+        category: ProblemCategory.calculation,
+        difficulty: 3,
+      ),
+    ];
   }
 
-  Future<Problem?> getProblemById(String id) async {
-    await Future.delayed(const Duration(milliseconds: 100));
-    try {
-      return _problems.firstWhere((problem) => problem.id == id);
-    } catch (e) {
-      return null;
-    }
+  Future<Problem?> getProblemById(String? id) async {
+    if (id == null) return null;
+    final problems = await getProblems();
+    return problems.firstWhere((problem) => problem.id == id);
   }
 
-  Future<Problem> createProblem(Problem problem) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    _problems.add(problem);
-    return problem;
+  Future<List<Problem>> getProblemsByCategory(ProblemCategory? category) async {
+    if (category == null) return [];
+    final problems = await getProblems();
+    return problems.where((problem) => problem.category == category).toList();
   }
-
-  Future<Problem?> updateProblem(Problem updatedProblem) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    final index = _problems.indexWhere((p) => p.id == updatedProblem.id);
-    if (index != -1) {
-      _problems[index] = updatedProblem;
-      return updatedProblem;
-    }
-    return null;
-  }
-
-  Future<bool> deleteProblem(String id) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    final initialLength = _problems.length;
-    _problems.removeWhere((problem) => problem.id == id);
-    return _problems.length < initialLength;
-  }
-
-  Future<List<Problem>> getProblemsByCategory(String category) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    return _problems.where((problem) => problem.category == category).toList();
-  }
-} 
+}

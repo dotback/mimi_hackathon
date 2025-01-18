@@ -1,62 +1,28 @@
-import 'dart:math';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../../data/models/problem.dart';
-import '../../data/repositories/problem_repository.dart';
-import 'problem_generation_service.dart';
 
-class RecallProblemService extends ProblemGenerationService {
-  RecallProblemService(ProblemRepository problemRepository) 
-      : super(problemRepository);
-
-  @override
-  Future<Problem> generateProblem() async {
-    final random = Random();
-    
-    final recallImages = [
-      'assets/images/animal1.jpg',
-      'assets/images/landmark1.jpg',
-      'assets/images/object1.jpg',
-      'assets/images/food1.jpg',
+class RecallProblemService {
+  Future<List<Problem>> generateProblems({int difficulty = 2}) async {
+    // 難易度に応じた想起問題を生成
+    return [
+      Problem(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        title: '想起問題',
+        description: '難易度$difficultyの想起問題',
+        category: ProblemCategory.recall,
+        difficulty: difficulty,
+        question: '先ほど覚えた単語を思い出してください',
+        answers: ['りんご', '電車', '青空'],
+      )
     ];
-
-    final recallQuestions = [
-      'この画像に写っているものは何ですか？',
-      'この画像の中の動物の名前は？',
-      'この画像の風景はどこですか？',
-      'この画像の料理の名前は？',
-    ];
-
-    final recallAnswers = [
-      '動物',
-      '犬',
-      '東京タワー',
-      '寿司',
-    ];
-
-    final difficulties = ['easy', 'medium', 'hard'];
-    final categories = ['visual_recall', 'memory', 'observation'];
-
-    final problem = Problem(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      question: recallQuestions[random.nextInt(recallQuestions.length)],
-      answers: [recallAnswers[random.nextInt(recallAnswers.length)]],
-      difficulty: difficulties[random.nextInt(difficulties.length)],
-      category: categories[random.nextInt(categories.length)],
-      imagePath: recallImages[random.nextInt(recallImages.length)],
-    );
-
-    return problem;
   }
 
-  // 画像認識に基づいた追加のメソッド
-  Future<Problem> generateImageRecallProblem(String imagePath) async {
-    final problem = await generateProblem();
-    return Problem(
-      id: problem.id,
-      question: problem.question,
-      answers: problem.answers,
-      difficulty: problem.difficulty,
-      category: problem.category,
-      imagePath: imagePath,
-    );
+  Future<void> saveProblems(List<Problem> problems) async {
+    // 問題をローカルストレージに保存
+    final prefs = await SharedPreferences.getInstance();
+    final problemsJson = problems.map((p) => p.toJson()).toList();
+    await prefs.setStringList(
+        'recall_problems', problemsJson.map((p) => json.encode(p)).toList());
   }
-} 
+}

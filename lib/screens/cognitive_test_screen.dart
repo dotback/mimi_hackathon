@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:geolocator/geolocator.dart';
 import 'home_screen.dart';
+import '../logic/services/create_problem_management.dart';
+import '../logic/services/gemini_problem_generation_service.dart';
+import '../../data/models/user.dart';
 
 class CognitiveTestScreen extends StatefulWidget {
   const CognitiveTestScreen({super.key});
@@ -11,7 +13,8 @@ class CognitiveTestScreen extends StatefulWidget {
   State<CognitiveTestScreen> createState() => _CognitiveTestScreenState();
 }
 
-class _CognitiveTestScreenState extends State<CognitiveTestScreen> with SingleTickerProviderStateMixin {
+class _CognitiveTestScreenState extends State<CognitiveTestScreen>
+    with SingleTickerProviderStateMixin {
   final List<Map<String, dynamic>> _questions = [
     {
       'question': '現在いる場所の種類を答えてください。',
@@ -79,12 +82,14 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen> with SingleTi
 
   final TextEditingController _textController = TextEditingController();
   int _currentQuestionIndex = 0;
-  List<String> _userAnswers = [];
+  final List<String> _userAnswers = [];
   int _score = 0;
   Timer? _questionTimer;
   int _remainingTime = 0;
   late AnimationController _timerAnimationController;
   late Animation<double> _timerAnimation;
+  final _createProblemManagement = CreateProblemManagement();
+  final _apiService = GeminiProblemGenerationService();
 
   @override
   void initState() {
@@ -94,7 +99,8 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen> with SingleTi
       duration: const Duration(seconds: 30),
       vsync: this,
     );
-    _timerAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(_timerAnimationController);
+    _timerAnimation =
+        Tween<double>(begin: 1.0, end: 0.0).animate(_timerAnimationController);
     _startQuestionTimer();
   }
 
@@ -115,7 +121,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen> with SingleTi
     _remainingTime = _questions[_currentQuestionIndex]['timeLimit'];
     _timerAnimationController.reset();
     _timerAnimationController.forward();
-    
+
     _questionTimer?.cancel();
     _questionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
@@ -168,7 +174,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen> with SingleTi
 
   void _showResultDialog() {
     final resultComment = _getResultInterpretation();
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -220,17 +226,19 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen> with SingleTi
             _nextQuestion(DateFormat('yyyy年M月d日').format(date));
           },
         );
-      
+
       case 'location_type':
       case 'season':
       case 'animal':
       case 'recall':
         return Column(
           children: [
-            ...question['options'].map<Widget>((option) => ElevatedButton(
-                  onPressed: () => _nextQuestion(option),
-                  child: Text(option),
-                )).toList(),
+            ...question['options']
+                .map<Widget>((option) => ElevatedButton(
+                      onPressed: () => _nextQuestion(option),
+                      child: Text(option),
+                    ))
+                .toList(),
             const SizedBox(height: 10),
             ElevatedButton(
               onPressed: () => _nextQuestion('わからない'),
@@ -239,7 +247,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen> with SingleTi
             ),
           ],
         );
-      
+
       case 'memory':
         return Column(
           children: [
@@ -254,23 +262,23 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen> with SingleTi
             ),
           ],
         );
-      
+
       case 'math':
       case 'reverse_math':
         return ElevatedButton(
           onPressed: () => _nextQuestion('計算完了'),
           child: const Text('計算を完了'),
         );
-      
+
       case 'birthday':
       case 'time':
       default:
         return TextField(
           controller: _textController,
           decoration: InputDecoration(
-            hintText: question['type'] == 'birthday' 
-              ? '例: 1980年1月1日' 
-              : '例: ${DateFormat('HH:mm').format(DateTime.now())}',
+            hintText: question['type'] == 'birthday'
+                ? '例: 1980年1月1日'
+                : '例: ${DateFormat('HH:mm').format(DateTime.now())}',
             border: const OutlineInputBorder(),
           ),
           onSubmitted: _nextQuestion,
@@ -278,12 +286,20 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen> with SingleTi
     }
   }
 
-  void _finishTest() {
-    // テスト結果を計算
+  void _finishTest() async {
     int score = _calculateScore();
     String comment = _generateComment(score);
 
-    // 結果を持ってHomeScreenに戻る
+    // ユーザー情報を取得（仮）
+    User user = await _apiService.fetchUserProfile('dummy_user_id');
+
+    // 問題生成サービスに結果を渡す
+    await _createProblemManagement.generateProblems(user, {
+      'score': score,
+      'comment': comment,
+    });
+
+    // ホーム画面に戻る
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
         builder: (context) => HomeScreen(
@@ -299,11 +315,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen> with SingleTi
 
   // スコアを計算するメソッド
   int _calculateScore() {
-    int score = 0;
-    for (var answer in _userAnswers) {
-      if (answer == true) score++;
-    }
-    return score;
+    return _userAnswers.where((answer) => answer != null).length;
   }
 
   // スコアに基づいてコメントを生成
@@ -366,4 +378,4 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen> with SingleTi
       ),
     );
   }
-} 
+}

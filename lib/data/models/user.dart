@@ -13,13 +13,13 @@ class User {
     required this.name,
     required this.gender,
     required this.age,
-    required this.birthday,
+    DateTime? birthday,
     required this.exerciseHabit,
     required this.sleepHours,
     required this.email,
     this.cognitiveFunctionScore,
     this.cognitiveFunctionComment,
-  });
+  }) : birthday = birthday ?? DateTime(1960, 1, 1);
 
   // JSONからUserオブジェクトを作成するコンストラクタ
   factory User.fromJson(Map<String, dynamic> json) {
@@ -71,8 +71,10 @@ class User {
       exerciseHabit: exerciseHabit ?? this.exerciseHabit,
       sleepHours: sleepHours ?? this.sleepHours,
       email: email ?? this.email,
-      cognitiveFunctionScore: cognitiveFunctionScore ?? this.cognitiveFunctionScore,
-      cognitiveFunctionComment: cognitiveFunctionComment ?? this.cognitiveFunctionComment,
+      cognitiveFunctionScore:
+          cognitiveFunctionScore ?? this.cognitiveFunctionScore,
+      cognitiveFunctionComment:
+          cognitiveFunctionComment ?? this.cognitiveFunctionComment,
     );
   }
-} 
+}

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
 import '../data/models/user.dart';
 import '../logic/services/api_service.dart';
 import '../logic/services/api_cognitive_test_service.dart';
+import '../logic/services/shared_preferences_service.dart';
 import 'cognitive_test_screen.dart';
+import 'daily_problem_screen.dart';
 import 'login_screen.dart';
 import 'user_profile_screen.dart';
 
@@ -10,7 +14,7 @@ class HomeScreen extends StatefulWidget {
   final Map<String, dynamic>? initialTestResult;
 
   const HomeScreen({
-    super.key, 
+    super.key,
     this.initialTestResult,
   });
 
@@ -19,95 +23,157 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late Future<User> _userProfile;
-  final ApiService _apiService = ApiService();
-  final ApiCognitiveTestService _cognitiveTestService = ApiCognitiveTestService();
-  Map<String, dynamic>? _localCognitiveTestResult;
+  // ユーザーデータ、APIサービス、テスト結果などを管理する変数を定義
+  late final ApiService _apiService;
+  late final ApiCognitiveTestService _cognitiveTestService;
+  late final SharedPreferencesService _sharedPreferencesService;
+  late Future<User> _user;
+  Map<String, dynamic>? _cognitiveTestResult;
 
   @override
   void initState() {
     super.initState();
-    _fetchUserProfile();
-    _fetchLocalCognitiveTestResult();
+    // サービスの初期化
+    _apiService = ApiService();
+    _cognitiveTestService = ApiCognitiveTestService();
+    _sharedPreferencesService = SharedPreferencesService();
+    // ユーザープロファイルと認知機能テスト結果の取得
+    _initializeData();
+  }
 
-    // 初期テスト結果がある場合は保存
+  /// ユーザープロファイルと認知機能テスト結果を初期化する
+  Future<void> _initializeData() async {
+    _fetchUserProfile();
+    await _fetchCognitiveTestResult();
+
+    // 初期テスト結果がある場合は保存する
     if (widget.initialTestResult != null) {
-      _saveInitialTestResult();
+      await _saveInitialTestResult();
     }
   }
 
+  /// ユーザープロファイルを取得する
   void _fetchUserProfile() {
     setState(() {
-      _userProfile = _apiService.fetchUserProfile('dummy_user_id');
+      _user = _apiService.fetchUserProfile('dummy_user_id');
     });
   }
 
-  void _fetchLocalCognitiveTestResult() async {
+  /// 認知機能テスト結果をローカルストレージから取得する
+  Future<void> _fetchCognitiveTestResult() async {
     final result = await _cognitiveTestService.getLocalCognitiveTestResult();
     setState(() {
-      _localCognitiveTestResult = result;
+      _cognitiveTestResult = result;
     });
-
-    // ローカルストレージからの結果があれば、ユーザープロファイルを更新
-    if (result != null) {
-      final user = await _userProfile;
-      final updatedUser = user.copyWith(
-        cognitiveFunctionScore: result['score'],
-        cognitiveFunctionComment: result['comment'],
-      );
-
-      setState(() {
-        _userProfile = Future.value(updatedUser);
-      });
-    }
   }
 
-  void _saveInitialTestResult() async {
+  /// 初期テスト結果を保存する
+  Future<void> _saveInitialTestResult() async {
     try {
-      // ユーザープロファイルを取得
-      User user = await _userProfile;
+      User user = await _user;
 
-      // 認知機能テスト結果を保存
       User updatedUser = await _cognitiveTestService.saveCognitiveTestResult(
         user: user,
         cognitiveFunctionScore: widget.initialTestResult!['score'],
         cognitiveFunctionComment: widget.initialTestResult!['comment'],
       );
 
-      // 画面を更新
       setState(() {
-        _userProfile = Future.value(updatedUser);
-        _localCognitiveTestResult = {
+        _user = Future.value(updatedUser);
+      });
+
+      final localResult =
+          await _cognitiveTestService.getLocalCognitiveTestResult();
+      setState(() {
+        _cognitiveTestResult = {
           'score': widget.initialTestResult!['score'],
-          'comment': widget.initialTestResult!['comment'] ?? '',
-          'date': DateTime.now().toIso8601String(),
+          'comment': widget.initialTestResult!['comment'],
+          'date': localResult?['date'] ?? DateTime.now().toIso8601String(),
         };
       });
 
-      // スナックバーで結果を表示
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('認知機能テスト結果: スコア ${widget.initialTestResult!['score']} / 10'),
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      _showSuccessSnackBar(
+          '認知機能テスト結果: スコア ${widget.initialTestResult!['score']} / 10');
     } catch (e) {
-      // エラーハンドリング
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('テスト結果の保存に失敗しました: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showErrorSnackBar('テスト結果の保存に失敗しました: $e');
     }
   }
 
-  // ログアウト処理
-  void _logout() {
+  /// 成功メッセージのスナックバーを表示する
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  /// エラーメッセージのスナックバーを表示する
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  /// ログアウト処理を行う
+  Future<void> _logout() async {
+    await _sharedPreferencesService.clearLoginStatus();
+
+    if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const LoginScreen()),
       (Route<dynamic> route) => false,
     );
+  }
+
+  /// 認知機能テスト結果の色を取得する
+  Color _getTestResultColor(int? score) {
+    if (score == null) return Colors.grey;
+    if (score >= 8) return Colors.green;
+    if (score >= 5) return Colors.orange;
+    return Colors.red;
+  }
+
+  /// ドロワーメニューのアイテムを生成する
+  List<Widget> _buildDrawerItems(BuildContext context) {
+    return [
+      ListTile(
+        leading: const Icon(Icons.home),
+        title: const Text('ホーム'),
+        onTap: () => Navigator.pop(context),
+      ),
+      ListTile(
+        leading: const Icon(Icons.person),
+        title: const Text('マイプロフィール'),
+        onTap: () {
+          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const UserProfileScreen()),
+          );
+        },
+      ),
+      ListTile(
+        leading: const Icon(Icons.list),
+        title: const Text('テスト結果'),
+        onTap: () {
+          Navigator.pop(context);
+          // TODO: テスト結果画面への遷移を実装
+          _showSuccessSnackBar('テスト結果画面は準備中です');
+        },
+      ),
+      ListTile(
+        leading: const Icon(Icons.logout),
+        title: const Text('ログアウト'),
+        onTap: () async {
+          await _logout();
+        },
+      ),
+    ];
   }
 
   @override
@@ -116,7 +182,6 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('ホーム'),
       ),
-      // サイドバーを追加
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -133,142 +198,168 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('ホーム'),
-              onTap: () {
-                // 現在のページなので、ドロワーを閉じるだけ
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('マイプロフィール'),
-              onTap: () {
-                Navigator.pop(context); // ドロワーを閉じる
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const UserProfileScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.list),
-              title: const Text('テスト結果'),
-              onTap: () {
-                // TODO: テスト結果画面を実装後に修正
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('テスト結果画面は準備中です')),
-                );
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('ログアウト'),
-              onTap: _logout,
-            ),
+            ..._buildDrawerItems(context),
           ],
         ),
       ),
-      body: FutureBuilder<User>(
-        future: _userProfile,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('エラー: ${snapshot.error}'));
-          } else if (snapshot.hasData) {
+      body: SafeArea(
+        child: FutureBuilder<User>(
+          future: _user,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('エラー: ${snapshot.error}'));
+            } else if (!snapshot.hasData) {
+              return const Center(child: Text('データがありません'));
+            }
+
             User user = snapshot.data!;
-            return Center(
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('こんにちは、${user.name}さん'),
-                  Text('年齢: ${user.age}歳'),
-                  Text('運動習慣: ${user.exerciseHabit}'),
-                  
-                  // ローカルストレージの認知機能テスト結果を表示
-                  if (_localCognitiveTestResult != null) ...[
-                    const SizedBox(height: 20),
-                    const Text(
-                      '最新の認知機能テスト結果',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text('スコア: ${_localCognitiveTestResult!['score']} / 10'),
-                    Text(
-                      _localCognitiveTestResult!['comment'],
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: _getCommentColor(_localCognitiveTestResult!['score'])),
-                    ),
-                  ],
-                  
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CognitiveTestScreen(),
-                        ),
-                      );
-
-                      // テスト結果が返ってきた場合
-                      if (result != null && result is Map<String, dynamic>) {
-                        try {
-                          // 認知機能テスト結果を保存
-                          User updatedUser = await _cognitiveTestService.saveCognitiveTestResult(
-                            user: user,
-                            cognitiveFunctionScore: result['score'],
-                            cognitiveFunctionComment: result['comment'],
-                          );
-
-                          // 画面を更新
-                          setState(() {
-                            _userProfile = Future.value(updatedUser);
-                            _localCognitiveTestResult = {
-                              'score': result['score'],
-                              'comment': result['comment'] ?? '',
-                              'date': DateTime.now().toIso8601String(),
-                            };
-                          });
-
-                          // スナックバーで結果を表示
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('認知機能テスト結果: スコア ${result['score']} / 10'),
-                              duration: const Duration(seconds: 3),
-                            ),
-                          );
-                        } catch (e) {
-                          // エラーハンドリング
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('テスト結果の保存に失敗しました: $e'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    child: const Text('認知機能テストを受ける'),
+                  _buildHeader(context, user),
+                  const SizedBox(height: 24),
+                  _buildCognitiveTestResult(context),
+                  const SizedBox(height: 24),
+                  _buildToDoList(context),
+                  const SizedBox(height: 24),
+                  _buildDailyProblemButton(context),
+                  const SizedBox(height: 24),
+                  Center(
+                    child: _buildCognitiveTestButton(context),
                   ),
                 ],
               ),
             );
-          }
-          return const Center(child: Text('データがありません'));
-        },
+          },
+        ),
       ),
     );
   }
 
-  // スコアに応じたコメントの色を返す
-  Color _getCommentColor(int score) {
-    if (score >= 8) return Colors.green;
-    if (score >= 5) return Colors.orange;
-    return Colors.red;
+  /// ヘッダー部分を構築する
+  Widget _buildHeader(BuildContext context, User user) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'こんにちは、${user.name}さん',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          DateFormat('yyyy年M月d日 (E)', 'ja_JP').format(DateTime.now()),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+      ],
+    );
   }
-} 
+
+  /// 認知機能テスト結果を表示するウィジェットを構築する
+  Widget _buildCognitiveTestResult(BuildContext context) {
+    if (_cognitiveTestResult == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '最新の認知機能テスト結果',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'スコア: ${_cognitiveTestResult!['score']} / 10',
+          style: TextStyle(
+            fontSize: 16,
+            color: _getTestResultColor(_cognitiveTestResult!['score']),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _cognitiveTestResult!['comment'],
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ],
+    );
+  }
+
+  /// 今日のTo Doリストを表示するウィジェットを構築する
+  Widget _buildToDoList(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '今日のTo Doリスト',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            TextButton(
+              onPressed: () {
+                // TODO: ToDo追加処理の実装
+              },
+              child: const Text('追加'),
+            ),
+          ],
+        ),
+        // TODO: ToDoリストの実装
+        const Text('現在のToDoはありません'),
+      ],
+    );
+  }
+
+  /// 今日の問題ボタンを構築する
+  Widget _buildDailyProblemButton(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '今日の問題',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 8),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size(double.infinity, 48),
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const DailyProblemScreen()),
+            );
+          },
+          child: const Text('今日の問題を解く'),
+        ),
+      ],
+    );
+  }
+
+  /// 認知機能テストボタンを構築する
+  Widget _buildCognitiveTestButton(BuildContext context) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        minimumSize: const Size(200, 48),
+      ),
+      onPressed: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const CognitiveTestScreen()),
+        );
+
+        // テスト結果が返ってきたら、ローカルのテスト結果とユーザープロファイルを更新
+        if (result != null) {
+          await _fetchCognitiveTestResult();
+          _fetchUserProfile();
+        }
+      },
+      child: const Text('認知機能テストを受ける'),
+    );
+  }
+}

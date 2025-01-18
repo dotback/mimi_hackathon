@@ -1,42 +1,34 @@
 import '../../data/models/problem.dart';
-import '../../data/repositories/problem_repository.dart';
 
-abstract class ProblemGenerationService {
-  final ProblemRepository problemRepository;
-
-  ProblemGenerationService(this.problemRepository);
-
-  // 共通の問題生成メソッド
-  Future<Problem> generateProblem();
-
-  // 難易度に基づいて問題を生成
-  Future<Problem> generateProblemByDifficulty(String difficulty) async {
-    final problem = await generateProblem();
-    return Problem(
-      id: problem.id,
-      question: problem.question,
-      answers: problem.answers,
-      difficulty: difficulty,
-      category: problem.category,
-      imagePath: problem.imagePath,
-    );
+class ProblemGenerationService {
+  Future<List<Problem>> generateProblems() async {
+    return [
+      Problem(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        title: '問題1',
+        description: 'これは問題1です',
+        category: ProblemCategory.memory,
+        difficulty: 2,
+        question: 'これは記憶問題です',
+        answers: ['はい', 'いいえ'],
+      ),
+      Problem(
+        id: (DateTime.now().millisecondsSinceEpoch + 1).toString(),
+        title: '問題2',
+        description: 'これは問題2です',
+        category: ProblemCategory.recall,
+        difficulty: 3,
+        question: 'これは想起問題です',
+        answers: ['はい', 'いいえ'],
+        imagePath: 'assets/images/test.png',
+      ),
+      Problem(
+        id: (DateTime.now().millisecondsSinceEpoch + 2).toString(),
+        title: '問題3',
+        description: 'これは問題3です',
+        category: ProblemCategory.calculation,
+        difficulty: 1,
+      ),
+    ];
   }
-
-  // カテゴリに基づいて問題を生成
-  Future<Problem> generateProblemByCategory(String category) async {
-    final problem = await generateProblem();
-    return Problem(
-      id: problem.id,
-      question: problem.question,
-      answers: problem.answers,
-      difficulty: problem.difficulty,
-      category: category,
-      imagePath: problem.imagePath,
-    );
-  }
-
-  // 問題を保存
-  Future<Problem> saveProblem(Problem problem) async {
-    return await problemRepository.createProblem(problem);
-  }
-} 
+}
