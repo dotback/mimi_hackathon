@@ -1,12 +1,9 @@
-import 'dart:math';
 import '../../data/models/problem.dart';
 import '../../data/models/problem_result.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 class ProblemService {
-  final _random = Random();
-
   Future<List<Problem>> generateDailyProblems() async {
     return [
       Problem(
@@ -80,7 +77,6 @@ class ProblemService {
   }
 
   Future<List<ProblemResult>> getProblemResultTrends() async {
-    final performanceMap = await getCategoryPerformance();
     final results = await getProblemResults();
 
     // パフォーマンスマップからProblemResultのリストを生成

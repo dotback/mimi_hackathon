@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import '../../data/models/problem.dart';
 import '../../data/models/user.dart';
 
 class GeminiProblemGenerationService {
@@ -8,7 +5,6 @@ class GeminiProblemGenerationService {
       User user, Map<String, dynamic> testResult) async {
     // Gemini APIの代わりにローカルでの問題生成ロジック
     final int score = testResult['score'];
-    final String comment = testResult['comment'];
 
     return {
       'normal_problems': _generateNormalProblemInstructions(score),

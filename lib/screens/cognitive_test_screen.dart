@@ -315,7 +315,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
 
   // スコアを計算するメソッド
   int _calculateScore() {
-    return _userAnswers.where((answer) => answer != null).length;
+    return _userAnswers.where((answer) => answer.isNotEmpty).length;
   }
 
   // スコアに基づいてコメントを生成
