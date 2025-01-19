@@ -17,67 +17,152 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
     with SingleTickerProviderStateMixin {
   final List<Map<String, dynamic>> _questions = [
     {
-      'question': '現在いる場所の種類を答えてください。',
-      'type': 'location_type',
+      'question': 'あなたのお年はいくつですか?',
+      'type': 'age',
       'timeLimit': 30,
-      'options': ['自宅', '職場', '公共施設', '屋外', 'その他', 'わからない'],
+      'options': null,
     },
     {
-      'question': '今日の日付を答えてください。',
-      'type': 'date',
+      'question': '今日は何年の何月何日ですか？また、何曜日ですか？',
+      'type': 'detailed_date',
       'correctAnswer': null,
       'timeLimit': 30,
+      'options': {
+        'years': List.generate(10, (index) => DateTime.now().year - 5 + index)
+            .map((e) => e.toString())
+            .toList(),
+        'months': List.generate(12, (index) => (index + 1).toString()),
+        'days': List.generate(31, (index) => (index + 1).toString()),
+        'weekdays': ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日', '日曜日']
+      },
+    },
+    {
+      'question': '私たちが今いる場所はどこですか？',
+      'type': 'location_description',
+      'timeLimit': 30,
       'options': null,
     },
     {
-      'question': '以下の3つの単語を覚えてください：りんご、電車、青空',
-      'type': 'memory',
-      'memorizedWords': ['りんご', '電車', '青空'],
-      'timeLimit': 20,
-      'options': null,
+      'question': '今から表示される3つの単語を覚えてください',
+      'type': 'memory_stage1',
+      'memorizedWords': ['桜', '猫', '電車'],
+      'timeLimit': 30,
+      'multipleChoiceQuestions': [
+        {
+          'question': '最初の単語は何でしたか？',
+          'options': ['森', '桜', '花', '風'],
+          'correctAnswer': '桜'
+        },
+        {
+          'question': '2番目の単語は何でしたか？',
+          'options': ['犬', '猿', '猫', '狐'],
+          'correctAnswer': '猫'
+        },
+        {
+          'question': '最後の単語は何でしたか？',
+          'options': ['電車', '車', '消防車', '救急車'],
+          'correctAnswer': '電車'
+        }
+      ]
     },
     {
-      'question': '100から7を順番に引いていってください。',
-      'type': 'math',
+      'question': '今から数字が出るので逆の順番で回答してください',
+      'type': 'reverse_number_memory',
+      'memorizedNumbers': ['6', '8', '2', '9'],
+      'timeLimit': 30,
+      'multipleChoiceQuestions': [
+        {
+          'question': '最初の数字は何でしたか？',
+          'options': ['2', '6', '8', '9'],
+          'correctAnswer': '9'
+        },
+        {
+          'question': '2番目の数字は何でしたか？',
+          'options': ['6', '8', '2', '9'],
+          'correctAnswer': '2'
+        },
+        {
+          'question': '3番目の数字は何でしたか？',
+          'options': ['6', '8', '2', '9'],
+          'correctAnswer': '8'
+        },
+        {
+          'question': '最後の数字は何でしたか？',
+          'options': ['2', '6', '8', '9'],
+          'correctAnswer': '6'
+        }
+      ]
+    },
+    {
+      'question': '100から7を順番に引いてください。最初の数字を選んでください。',
+      'type': 'math_stage1',
+      'timeLimit': 30,
+      'options': ['94', '93', '92', '91'],
+      'correctAnswer': '93',
+      'nextStage': {
+        'question': '93から7を引いてください。',
+        'type': 'math_stage1',
+        'timeLimit': 30,
+        'options': ['86', '87', '88', '89'],
+        'correctAnswer': '86'
+      }
+    },
+    {
+      'question': '先ほど覚えた単語を再度回答してください',
+      'type': 'memory_stage1',
+      'memorizedWords': ['桜', '猫', '電車'],
+      'timeLimit': 30,
+      'multipleChoiceQuestions': [
+        {
+          'question': '最初の単語は何でしたか？',
+          'options': ['森', '桜', '花', '風'],
+          'correctAnswer': '桜'
+        },
+        {
+          'question': '2番目の単語は何でしたか？',
+          'options': ['犬', '猿', '猫', '狐'],
+          'correctAnswer': '猫'
+        },
+        {
+          'question': '最後の単語は何でしたか？',
+          'options': ['電車', '車', '消防車', '救急車'],
+          'correctAnswer': '電車'
+        }
+      ]
+    },
+    {
+      'question': '今から画像を表示するので覚えてください',
+      'type': 'image_memory',
+      'images': [
+        'assets/images/clock.png',
+        'assets/images/key.png',
+        'assets/images/pencil.png'
+      ],
+      'timeLimit': 30,
+      'multipleChoiceQuestions': [
+        {
+          'question': '最初の画像は何でしたか？',
+          'options': ['時計', 'コップ', '携帯電話', '扉'],
+          'correctAnswer': '時計'
+        },
+        {
+          'question': '2番目の画像は何でしたか？',
+          'options': ['傘', '靴', '帽子', '鍵'],
+          'correctAnswer': '鍵'
+        },
+        {
+          'question': '最後の画像は何でしたか？',
+          'options': ['カレンダー', '鉛筆', '水', '花'],
+          'correctAnswer': '鉛筆'
+        }
+      ]
+    },
+    {
+      'question': '知っている野菜の名前をできるだけ多く言ってください。',
+      'type': 'vegetable_list',
       'timeLimit': 60,
       'options': null,
     },
-    {
-      'question': '先ほど覚えた3つの単語を思い出してください。',
-      'type': 'recall',
-      'timeLimit': 30,
-      'options': ['りんご', '電車', '青空', 'わからない'],
-    },
-    {
-      'question': '今の季節はいつですか？',
-      'type': 'season',
-      'timeLimit': 30,
-      'options': ['春', '夏', '秋', '冬', 'わからない'],
-    },
-    {
-      'question': '以下の動物の名前を言ってください。',
-      'type': 'animal',
-      'timeLimit': 30,
-      'options': ['犬', '猫', '鳥', 'わからない'],
-    },
-    {
-      'question': '今から逆から100まで数えてください。',
-      'type': 'reverse_math',
-      'timeLimit': 60,
-      'options': null,
-    },
-    {
-      'question': '自分の生年月日を答えてください。',
-      'type': 'birthday',
-      'timeLimit': 30,
-      'options': null,
-    },
-    {
-      'question': '現在の時間を答えてください。',
-      'type': 'time',
-      'timeLimit': 30,
-      'options': null,
-    }
   ];
 
   final TextEditingController _textController = TextEditingController();
@@ -94,7 +179,16 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
   @override
   void initState() {
     super.initState();
-    _questions[1]['correctAnswer'] = _getCurrentDateString();
+
+    // 詳細な日付の正解を設定
+    final now = DateTime.now();
+    _questions[1]['correctAnswer'] = {
+      'year': now.year.toString(),
+      'month': now.month.toString(),
+      'day': now.day.toString(),
+      'weekday': _getWeekdayString(now.weekday)
+    };
+
     _timerAnimationController = AnimationController(
       duration: const Duration(seconds: 30),
       vsync: this,
@@ -112,17 +206,19 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
     super.dispose();
   }
 
-  String _getCurrentDateString() {
-    final now = DateTime.now();
-    return DateFormat('yyyy年M月d日').format(now);
-  }
-
   void _startQuestionTimer() {
     _remainingTime = _questions[_currentQuestionIndex]['timeLimit'];
     _timerAnimationController.reset();
     _timerAnimationController.forward();
 
     _questionTimer?.cancel();
+
+    // メモリーテストの場合は選択画面になるまでタイマーを開始しない
+    if (_questions[_currentQuestionIndex]['type'] == 'memory_stage1' ||
+        _questions[_currentQuestionIndex]['type'] == 'reverse_number_memory') {
+      return;
+    }
+
     _questionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         _remainingTime--;
@@ -135,7 +231,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
     });
   }
 
-  void _nextQuestion(String? answer, {bool skipped = false}) {
+  void _nextQuestion(String? answer, {bool skipped = false}) async {
     _questionTimer?.cancel();
     _timerAnimationController.stop();
 
@@ -143,17 +239,145 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
       _userAnswers.add(answer);
 
       switch (_questions[_currentQuestionIndex]['type']) {
+        case 'reverse_number_memory':
+          try {
+            // 回答を解析
+            final selectedAnswers = answer.split('|');
+            final multipleChoiceQuestions =
+                _questions[_currentQuestionIndex]['multipleChoiceQuestions'];
+
+            // 各多肢選択問題で正解を選んだら1点
+            for (var i = 0; i < multipleChoiceQuestions.length; i++) {
+              if (selectedAnswers[i] ==
+                  multipleChoiceQuestions[i]['correctAnswer']) {
+                _score++;
+              }
+            }
+          } catch (e) {
+            print('逆数字メモリーテストの検証中にエラーが発生しました: $e');
+          }
+          break;
+
+        case 'math_stage1':
+          // 問題で正解を選んだら1点
+          if (answer == _questions[_currentQuestionIndex]['correctAnswer']) {
+            _score++;
+          }
+
+          // 次のステージがある場合は進む
+          if (_questions[_currentQuestionIndex].containsKey('nextStage')) {
+            setState(() {
+              // 現在の質問のnextStageを次の質問として挿入
+              _questions.insert(_currentQuestionIndex + 1,
+                  _questions[_currentQuestionIndex]['nextStage']);
+              _currentQuestionIndex++;
+              _startQuestionTimer();
+            });
+            return;
+          }
+          break;
+
+        case 'memory_stage1':
+          try {
+            // 回答を解析
+            final selectedAnswers = answer.split('|');
+            final multipleChoiceQuestions =
+                _questions[_currentQuestionIndex]['multipleChoiceQuestions'];
+
+            // 各多肢選択問題で正解を選んだら1点
+            for (var i = 0; i < multipleChoiceQuestions.length; i++) {
+              if (selectedAnswers[i] ==
+                  multipleChoiceQuestions[i]['correctAnswer']) {
+                _score++;
+              }
+            }
+          } catch (e) {
+            print('メモリーテストの検証中にエラーが発生しました: $e');
+          }
+          break;
+
+        case 'location_description':
+          // 自発的で具体的な回答であれば2点
+          if (answer.trim().isNotEmpty && answer.length > 2) {
+            _score += 2;
+          }
+          break;
+
+        case 'detailed_date':
+          try {
+            // 正解の日付を取得
+            final correctDate =
+                _questions[_currentQuestionIndex]['correctAnswer'];
+
+            // 入力された値を解析
+            final parts = answer.split('|');
+            if (parts.length == 4) {
+              // 年、月、日、曜日それぞれ1点
+              if (parts[0] == correctDate['year']) _score++;
+              if (parts[1] == correctDate['month']) _score++;
+              if (parts[2] == correctDate['day']) _score++;
+              if (parts[3] == correctDate['weekday']) _score++;
+            }
+          } catch (e) {
+            print('日付の検証中にエラーが発生しました: $e');
+          }
+          break;
+
+        case 'age':
+          try {
+            // ユーザーの年齢を取得
+            User user = await _apiService.fetchUserProfile('dummy_user_id');
+            int userAge = user.age;
+            int answeredAge = int.parse(answer);
+
+            // 誤差2年以内であれば1点
+            if ((userAge - answeredAge).abs() <= 2) {
+              _score++;
+            }
+          } catch (e) {
+            // 年齢の取得や比較に失敗した場合は0点
+            print('年齢の検証中にエラーが発生しました: $e');
+          }
+          break;
+
         case 'date':
           if (answer == _questions[_currentQuestionIndex]['correctAnswer']) {
             _score++;
           }
           break;
-        case 'location_type':
         case 'season':
         case 'animal':
         case 'recall':
           if (_questions[_currentQuestionIndex]['options'].contains(answer)) {
             _score++;
+          }
+          break;
+        case 'image_memory':
+          try {
+            // 回答を解析
+            final selectedAnswers = answer.split('|');
+            final multipleChoiceQuestions =
+                _questions[_currentQuestionIndex]['multipleChoiceQuestions'];
+
+            // 各多肢選択問題で正解を選んだら1点
+            for (var i = 0; i < multipleChoiceQuestions.length; i++) {
+              if (selectedAnswers[i] ==
+                  multipleChoiceQuestions[i]['correctAnswer']) {
+                _score++;
+              }
+            }
+          } catch (e) {
+            print('画像メモリーテストの検証中にエラーが発生しました: $e');
+          }
+          break;
+        case 'vegetable_list':
+          try {
+            // 入力された野菜のリストを解析
+            final List<String> vegetables = answer.split(',');
+            // 野菜の数を点数として加算
+            _score += vegetables.length;
+          } catch (e) {
+            print('野菜リストの検証中にエラーが発生しました: $e');
           }
           break;
         // 他の質問タイプの採点ロジック
@@ -184,7 +408,9 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('スコア: $_score / ${_questions.length}'),
+              Text('スコア: $_score',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
               Text(
                 resultComment,
                 textAlign: TextAlign.center,
@@ -205,18 +431,127 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
   }
 
   String _getResultInterpretation() {
-    if (_score >= 8) {
-      return '認知機能は良好です。';
+    if (_score >= 21) {
+      return '認知機能は正常範囲内です。';
+    } else if (_score >= 16) {
+      return '軽度の認知機能低下が疑われます。\n医療専門家に相談することをお勧めします。';
+    } else if (_score >= 11) {
+      return '中等度の認知機能低下が疑われます。\n早めに医療専門家に相談してください。';
     } else if (_score >= 5) {
-      return '軽度の認知機能低下の可能性があります。医療専門家に相談することをお勧めします。';
+      return '高度の認知機能低下が疑われます。\n至急、医療専門家に相談してください。';
     } else {
-      return '認知機能低下の兆候が見られます。早めに医療専門家に相談してください。';
+      return '非常に高度の認知機能低下が疑われます。\n直ちに医療専門家に相談してください。';
     }
   }
 
   Widget _buildQuestionInput() {
     final question = _questions[_currentQuestionIndex];
     switch (question['type']) {
+      case 'image_memory':
+        return _ImageMemoryTestWidget(
+          images: question['images'],
+          multipleChoiceQuestions: question['multipleChoiceQuestions'],
+          onSubmit: _nextQuestion,
+          onSelectionScreenReady: () {
+            // タイマーを自動開始
+            _remainingTime = question['timeLimit'];
+            _timerAnimationController.reset();
+            _timerAnimationController.forward();
+
+            _questionTimer?.cancel();
+            _questionTimer =
+                Timer.periodic(const Duration(seconds: 1), (timer) {
+              setState(() {
+                _remainingTime--;
+              });
+
+              if (_remainingTime <= 0) {
+                _questionTimer?.cancel();
+                _nextQuestion(null);
+              }
+            });
+          },
+        );
+
+      case 'memory_stage1':
+      case 'reverse_number_memory':
+      case 'number_recall':
+        return _MemoryTestWidget(
+          memorizedWords: question['type'] == 'memory_stage1'
+              ? question['memorizedWords']
+              : (question['type'] == 'reverse_number_memory'
+                  ? question['memorizedNumbers']
+                  : []),
+          multipleChoiceQuestions: question['multipleChoiceQuestions'],
+          onSubmit: _nextQuestion,
+          initialStage: question['type'] == 'number_recall' ? 2 : 0,
+          onSelectionScreenReady: () {
+            // number_recallの場合はタイマーを自動開始
+            _remainingTime = question['timeLimit'];
+            _timerAnimationController.reset();
+            _timerAnimationController.forward();
+
+            _questionTimer?.cancel();
+            _questionTimer =
+                Timer.periodic(const Duration(seconds: 1), (timer) {
+              setState(() {
+                _remainingTime--;
+              });
+
+              if (_remainingTime <= 0) {
+                _questionTimer?.cancel();
+                _nextQuestion(null);
+              }
+            });
+          },
+        );
+
+      case 'math_stage1':
+        return Column(
+          children: [
+            Text(
+              question['question'],
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            ...question['options']
+                .map<Widget>((option) => ElevatedButton(
+                      onPressed: () => _nextQuestion(option),
+                      child: Text(option),
+                    ))
+                .toList(),
+          ],
+        );
+
+      case 'location_description':
+        return TextField(
+          controller: _textController,
+          decoration: const InputDecoration(
+            hintText: '今いる場所を具体的に教えてください',
+            border: OutlineInputBorder(),
+          ),
+          onSubmitted: _nextQuestion,
+          maxLines: null,
+          keyboardType: TextInputType.multiline,
+        );
+
+      case 'detailed_date':
+        return _DetailedDateInput(
+          options: question['options'],
+          onSubmit: _nextQuestion,
+        );
+
+      case 'age':
+        return TextField(
+          controller: _textController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            hintText: 'あなたの年齢を入力してください（半角数字）',
+            border: OutlineInputBorder(),
+          ),
+          onSubmitted: _nextQuestion,
+        );
+
       case 'date':
         return CalendarDatePicker(
           initialDate: DateTime.now(),
@@ -272,6 +607,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
 
       case 'birthday':
       case 'time':
+      case 'vegetable_list':
       default:
         return TextField(
           controller: _textController,
@@ -315,17 +651,43 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
 
   // スコアを計算するメソッド
   int _calculateScore() {
-    return _userAnswers.where((answer) => answer.isNotEmpty).length;
+    return _score; // すでに各問題で_scoreを加算しているため、そのまま返す
   }
 
   // スコアに基づいてコメントを生成
   String _generateComment(int score) {
-    if (score >= 8) {
-      return '認知機能は非常に良好です。現在の生活習慣を継続してください。';
+    if (score >= 21) {
+      return '認知機能は正常範囲内です。現在の生活習慣を継続してください。';
+    } else if (score >= 16) {
+      return '軽度の認知機能低下の可能性があります。生活習慣の改善と定期的な健康チェックをお勧めします。';
+    } else if (score >= 11) {
+      return '中等度の認知機能低下が疑われます。医療専門家に相談し、早期対応が重要です。';
     } else if (score >= 5) {
-      return '認知機能は標準的です。さらなる改善の余地があります。';
+      return '高度の認知機能低下が疑われます。専門的な医療支援が必要です。';
     } else {
-      return '認知機能の低下が見られます。医療専門家に相談することをお勧めします。';
+      return '非常に高度の認知機能低下が疑われます。早急に専門医の診察を受けることを強くお勧めします。';
+    }
+  }
+
+  // 曜日を日本語文字列に変換するヘルパーメソッド
+  String _getWeekdayString(int weekday) {
+    switch (weekday) {
+      case 1:
+        return '月曜日';
+      case 2:
+        return '火曜日';
+      case 3:
+        return '水曜日';
+      case 4:
+        return '木曜日';
+      case 5:
+        return '金曜日';
+      case 6:
+        return '土曜日';
+      case 7:
+        return '日曜日';
+      default:
+        return '';
     }
   }
 
@@ -361,6 +723,12 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
             ),
             const SizedBox(height: 10),
             Text(
+              '${_currentQuestionIndex + 1}問目 / 全${_questions.length}問',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 10),
+            Text(
               '残り時間: $_remainingTime 秒',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium,
@@ -377,5 +745,534 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
         ),
       ),
     );
+  }
+}
+
+class _DetailedDateInput extends StatefulWidget {
+  final Map<String, List<String>?> options;
+  final Function(String?) onSubmit;
+
+  const _DetailedDateInput(
+      {Key? key, required this.options, required this.onSubmit})
+      : super(key: key);
+
+  @override
+  State<_DetailedDateInput> createState() => _DetailedDateInputState();
+}
+
+class _DetailedDateInputState extends State<_DetailedDateInput> {
+  String? selectedYear;
+  String? selectedMonth;
+  String? selectedDay;
+  String? selectedWeekday;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // 年のドロップダウン
+        DropdownButton<String>(
+          hint: const Text('年を選択'),
+          value: selectedYear,
+          items: widget.options['years']
+                  ?.map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList() ??
+              [],
+          onChanged: (String? newValue) {
+            setState(() {
+              selectedYear = newValue;
+            });
+          },
+        ),
+
+        // 月のドロップダウン
+        DropdownButton<String>(
+          hint: const Text('月を選択'),
+          value: selectedMonth,
+          items: widget.options['months']
+                  ?.map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList() ??
+              [],
+          onChanged: (String? newValue) {
+            setState(() {
+              selectedMonth = newValue;
+            });
+          },
+        ),
+
+        // 日のドロップダウン
+        DropdownButton<String>(
+          hint: const Text('日を選択'),
+          value: selectedDay,
+          items: widget.options['days']
+                  ?.map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList() ??
+              [],
+          onChanged: (String? newValue) {
+            setState(() {
+              selectedDay = newValue;
+            });
+          },
+        ),
+
+        // 曜日のラジオボタン
+        Column(
+          children: widget.options['weekdays']?.map<Widget>((String weekday) {
+                return RadioListTile<String>(
+                  title: Text(weekday),
+                  value: weekday,
+                  groupValue: selectedWeekday,
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      selectedWeekday = newValue;
+                    });
+                  },
+                );
+              }).toList() ??
+              [],
+        ),
+
+        // 送信ボタン
+        ElevatedButton(
+          onPressed: selectedYear != null &&
+                  selectedMonth != null &&
+                  selectedDay != null &&
+                  selectedWeekday != null
+              ? () {
+                  // 選択された値を | で結合して送信
+                  final answer =
+                      '$selectedYear|$selectedMonth|$selectedDay|$selectedWeekday';
+                  widget.onSubmit(answer);
+                }
+              : null,
+          child: const Text('回答する'),
+        ),
+      ],
+    );
+  }
+}
+
+class _MemoryTestWidget extends StatefulWidget {
+  final List<String> memorizedWords;
+  final List<Map<String, dynamic>> multipleChoiceQuestions;
+  final Function(String?) onSubmit;
+  final int initialStage;
+  final VoidCallback? onSelectionScreenReady;
+
+  const _MemoryTestWidget({
+    Key? key,
+    required this.memorizedWords,
+    required this.multipleChoiceQuestions,
+    required this.onSubmit,
+    required this.initialStage,
+    this.onSelectionScreenReady,
+  }) : super(key: key);
+
+  @override
+  State<_MemoryTestWidget> createState() => _MemoryTestWidgetState();
+}
+
+class _MemoryTestWidgetState extends State<_MemoryTestWidget> {
+  int _stage = 0; // 0: カウントダウン, 1: フラッシュ表示, 2: 選択画面
+  int _flashIndex = 0;
+  int _countdownSeconds = 5;
+  Timer? _countdownTimer;
+  Timer? _flashTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _stage = widget.initialStage;
+
+    if (_stage == 0) {
+      _startCountdown();
+    } else if (_stage == 2) {
+      // 選択画面の場合はすぐにonSelectionScreenReadyを呼び出す
+      widget.onSelectionScreenReady?.call();
+    }
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    _flashTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startCountdown() {
+    _stage = 0;
+    _countdownSeconds = 5;
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _countdownSeconds--;
+      });
+
+      if (_countdownSeconds <= 0) {
+        timer.cancel();
+        _startFlashWords();
+      }
+    });
+  }
+
+  void _startFlashWords() {
+    _stage = 1;
+    _flashIndex = 0;
+    _flashTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+      setState(() {
+        _flashIndex++;
+      });
+
+      if (_flashIndex >= widget.memorizedWords.length) {
+        timer.cancel();
+        _showMultipleChoiceQuestions();
+      }
+    });
+  }
+
+  void _showMultipleChoiceQuestions() {
+    setState(() {
+      _stage = 2;
+    });
+
+    // タイマー開始のコールバックを呼び出す
+    widget.onSelectionScreenReady?.call();
+  }
+
+  List<List<String>> selectedAnswers = [];
+
+  @override
+  Widget build(BuildContext context) {
+    if (_stage == 0) {
+      // カウントダウン画面
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            '今から出てくる単語を覚えてください',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            '$_countdownSeconds',
+            style: const TextStyle(fontSize: 72, fontWeight: FontWeight.bold),
+          ),
+        ],
+      );
+    }
+
+    if (_stage == 1) {
+      // フラッシュ表示画面
+      return Center(
+        child: Text(
+          widget.memorizedWords[_flashIndex],
+          style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+        ),
+      );
+    }
+
+    // 選択画面
+    return Column(
+      children: [
+        ...List.generate(widget.multipleChoiceQuestions.length, (index) {
+          final question = widget.multipleChoiceQuestions[index];
+
+          // 各質問の選択状態を管理するリストを初期化
+          if (selectedAnswers.length <= index) {
+            selectedAnswers.add([]);
+          }
+
+          return Column(
+            children: [
+              Text(question['question']),
+              ...question['options']
+                  .map<Widget>((option) => ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            // 同じ質問の他の選択肢をクリア
+                            selectedAnswers[index] = [option];
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              selectedAnswers[index].contains(option)
+                                  ? Colors.green
+                                  : null,
+                        ),
+                        child: Text(option),
+                      ))
+                  .toList(),
+            ],
+          );
+        }),
+        const SizedBox(height: 20),
+        ElevatedButton(
+          onPressed:
+              selectedAnswers.length == widget.multipleChoiceQuestions.length &&
+                      selectedAnswers.every((answers) => answers.isNotEmpty)
+                  ? () {
+                      // 選択された回答を送信
+                      widget.onSubmit(selectedAnswers
+                          .map((answers) => answers.first)
+                          .join('|'));
+                    }
+                  : null,
+          child: const Text('回答する'),
+        ),
+      ],
+    );
+  }
+}
+
+class _ImageMemoryTestWidget extends StatefulWidget {
+  final List<String> images;
+  final List<Map<String, dynamic>> multipleChoiceQuestions;
+  final Function(String?) onSubmit;
+  final VoidCallback onSelectionScreenReady;
+
+  const _ImageMemoryTestWidget({
+    Key? key,
+    required this.images,
+    required this.multipleChoiceQuestions,
+    required this.onSubmit,
+    required this.onSelectionScreenReady,
+  }) : super(key: key);
+
+  @override
+  State<_ImageMemoryTestWidget> createState() => _ImageMemoryTestWidgetState();
+}
+
+class _ImageMemoryTestWidgetState extends State<_ImageMemoryTestWidget> {
+  int _stage = 0; // 0: カウントダウン, 1: フラッシュ表示, 2: 選択画面
+  int _flashIndex = 0;
+  int _countdownSeconds = 5;
+  Timer? _countdownTimer;
+  Timer? _flashTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _stage = 0;
+
+    if (_stage == 0) {
+      _startCountdown();
+    } else if (_stage == 2) {
+      // 選択画面の場合はすぐにonSelectionScreenReadyを呼び出す
+      widget.onSelectionScreenReady();
+    }
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    _flashTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startCountdown() {
+    _stage = 0;
+    _countdownSeconds = 5;
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _countdownSeconds--;
+      });
+
+      if (_countdownSeconds <= 0) {
+        timer.cancel();
+        _startFlashWords();
+      }
+    });
+  }
+
+  void _startFlashWords() {
+    _stage = 1;
+    _flashIndex = 0;
+    _flashTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+      setState(() {
+        _flashIndex++;
+      });
+
+      if (_flashIndex >= widget.images.length) {
+        timer.cancel();
+        _showMultipleChoiceQuestions();
+      }
+    });
+  }
+
+  void _showMultipleChoiceQuestions() {
+    setState(() {
+      _stage = 2;
+    });
+
+    // タイマー開始のコールバックを呼び出す
+    widget.onSelectionScreenReady();
+  }
+
+  List<List<String>> selectedAnswers = [];
+
+  @override
+  Widget build(BuildContext context) {
+    if (_stage == 0) {
+      // カウントダウン画面
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            '今から出てくる画像を覚えてください',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            '$_countdownSeconds',
+            style: const TextStyle(fontSize: 72, fontWeight: FontWeight.bold),
+          ),
+        ],
+      );
+    }
+
+    if (_stage == 1) {
+      // フラッシュ表示画面
+      return Center(
+        child: Image.asset(
+          widget.images[_flashIndex],
+          width: 200,
+          height: 200,
+        ),
+      );
+    }
+
+    // 選択画面
+    return Column(
+      children: [
+        ...List.generate(widget.multipleChoiceQuestions.length, (index) {
+          final question = widget.multipleChoiceQuestions[index];
+
+          // 各質問の選択状態を管理するリストを初期化
+          if (selectedAnswers.length <= index) {
+            selectedAnswers.add([]);
+          }
+
+          return Column(
+            children: [
+              Text(question['question']),
+              ...question['options']
+                  .map<Widget>((option) => ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            // 同じ質問の他の選択肢をクリア
+                            selectedAnswers[index] = [option];
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              selectedAnswers[index].contains(option)
+                                  ? Colors.green
+                                  : null,
+                        ),
+                        child: Text(option),
+                      ))
+                  .toList(),
+            ],
+          );
+        }),
+        const SizedBox(height: 20),
+        ElevatedButton(
+          onPressed:
+              selectedAnswers.length == widget.multipleChoiceQuestions.length &&
+                      selectedAnswers.every((answers) => answers.isNotEmpty)
+                  ? () {
+                      // 選択された回答を送信
+                      widget.onSubmit(selectedAnswers
+                          .map((answers) => answers.first)
+                          .join('|'));
+                    }
+                  : null,
+          child: const Text('回答する'),
+        ),
+      ],
+    );
+  }
+}
+
+class _VegetableListWidget extends StatefulWidget {
+  final Function(String?) onSubmit;
+
+  const _VegetableListWidget({
+    Key? key,
+    required this.onSubmit,
+  }) : super(key: key);
+
+  @override
+  State<_VegetableListWidget> createState() => _VegetableListWidgetState();
+}
+
+class _VegetableListWidgetState extends State<_VegetableListWidget> {
+  final TextEditingController _textController = TextEditingController();
+  final List<String> _vegetables = [];
+  final Set<String> _uniqueVegetables = {};
+
+  void _addVegetable(String vegetable) {
+    if (vegetable.trim().isNotEmpty && !_uniqueVegetables.contains(vegetable)) {
+      setState(() {
+        _vegetables.add(vegetable);
+        _uniqueVegetables.add(vegetable);
+      });
+      _textController.clear();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TextField(
+          controller: _textController,
+          decoration: const InputDecoration(
+            hintText: '野菜の名前を入力してください',
+            border: OutlineInputBorder(),
+          ),
+          onSubmitted: _addVegetable,
+        ),
+        const SizedBox(height: 10),
+        Expanded(
+          child: ListView.builder(
+            itemCount: _vegetables.length,
+            itemBuilder: (context, index) {
+              return ListTile(
+                title: Text(_vegetables[index]),
+                trailing: Text(
+                  '${index + 1}点',
+                  style: const TextStyle(color: Colors.green),
+                ),
+              );
+            },
+          ),
+        ),
+        ElevatedButton(
+          onPressed: _vegetables.isNotEmpty
+              ? () {
+                  // 入力された野菜のリストをカンマ区切りで送信
+                  widget.onSubmit(_vegetables.join(','));
+                }
+              : null,
+          child: const Text('回答終了'),
+        ),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
   }
 }
