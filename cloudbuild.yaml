@@ -1,0 +1,26 @@
+steps:
+  # Dockerイメージをビルド
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["build", "-t", "gcr.io/sixth-arbor-448303-i3/mimi-app", "."]
+
+  # ビルドしたイメージをContainer Registryにプッシュ
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/sixth-arbor-448303-i3/mimi-app"]
+
+  # Cloud Runにデプロイ
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - "run"
+      - "deploy"
+      - "mimi-app"
+      - "--image"
+      - "gcr.io/sixth-arbor-448303-i3/mimi-app"
+      - "--platform"
+      - "managed"
+      - "--region"
+      - "us-central1"
+      - "--allow-unauthenticated"
+
+images:
+  - "gcr.io/sixth-arbor-448303-i3/mimi-app"
