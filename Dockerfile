@@ -55,8 +55,12 @@ COPY --from=build /app/build/web /usr/share/nginx/html
 # Nginxのデフォルト設定を上書き
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# ポート80を公開
-EXPOSE 80
+# Cloud Run用のエントリーポイントスクリプトを追加
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Nginxを起動
-CMD ["nginx", "-g", "daemon off;"] 
+# デフォルトポートを8080に変更
+EXPOSE 8080
+
+# エントリーポイントスクリプトを実行
+ENTRYPOINT ["/entrypoint.sh"] 

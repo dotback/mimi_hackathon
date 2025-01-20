@@ -24,6 +24,7 @@ steps:
       - "--allow-unauthenticated"
       - "--memory=2Gi" # メモリを増やす
       - "--cpu=2" # CPUコアを増やす
+      - "--port=8080" # ポートを明示的に指定
 
 images:
   - "gcr.io/sixth-arbor-448303-i3/mimi-app"
