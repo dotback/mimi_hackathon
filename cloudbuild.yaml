@@ -1,7 +1,8 @@
 steps:
-  # Dockerイメージをビルド
+  # Dockerイメージをビルド（タイムアウト時間を延長）
   - name: "gcr.io/cloud-builders/docker"
     args: ["build", "-t", "gcr.io/sixth-arbor-448303-i3/mimi-app", "."]
+    timeout: 1800s # 30分のタイムアウト
 
   # ビルドしたイメージをContainer Registryにプッシュ
   - name: "gcr.io/cloud-builders/docker"
@@ -21,6 +22,10 @@ steps:
       - "--region"
       - "us-central1"
       - "--allow-unauthenticated"
+      - "--memory=2Gi" # メモリを増やす
+      - "--cpu=2" # CPUコアを増やす
 
 images:
   - "gcr.io/sixth-arbor-448303-i3/mimi-app"
+
+timeout: 2100s # 全体のビルド時間を35分に設定
