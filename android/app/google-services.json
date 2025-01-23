@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "36692564230",
+    "project_id": "sixth-arbor-448303-i3",
+    "storage_bucket": "sixth-arbor-448303-i3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:36692564230:android:1cce00506de2faa564e687",
+        "android_client_info": {
+          "package_name": "com.example.mimi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-Suib3CPmx0XOyGUDqeliJPlF5SZOHi8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -34,8 +34,20 @@ dependencies:
     sdk: flutter
   shared_preferences: ^2.2.2
   http: ^1.1.0
-  geolocator: ^9.0.2
-  syncfusion_flutter_charts: ^21.1.41
+  geolocator: ^13.0.2
+  syncfusion_flutter_charts: ^28.1.41
+  firebase_core: ^3.10.1
+  firebase_auth: ^5.4.1
+  firebase_auth_web: ^5.8.13
+  email_validator: ^3.0.0
+  google_fonts: ^6.2.1
+  hexcolor: ^3.0.1
+  get: ^4.6.6
+  file_picker: ^8.1.7
+  cross_file: ^0.3.3+9
+  file_selector: ^1.0.3
+  intl: ^0.19.0 # 日付フォーマット用
+  loading_animation_widget: ^1.2.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -64,6 +76,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    - assets/images/R6A_0329.jpg
     - assets/images/
 
   # An image asset can refer to one or more resolution-specific "variants", see
@@ -93,3 +106,12 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
   generate: true
+dependency_overrides:
+  firebase_core_web:
+    git:
+      url: https://github.com/firebase/flutterfire.git
+      path: packages/firebase_core/firebase_core_web
+  firebase_auth_web:
+    git:
+      url: https://github.com/firebase/flutterfire.git
+      path: packages/firebase_auth/firebase_auth_web

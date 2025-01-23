@@ -1,23 +1,20 @@
 import 'dart:async';
 
+/// @Deprecated('Firebase AuthServiceに移行しました')
+/// 古い認証サービスは使用しないでください
 class AuthService {
-  // ダミーのユーザー認証メソッド
+  @Deprecated('Firebase AuthServiceに移行')
   Future<bool> login(String email, String password) async {
-    // 実際の認証ロジックはここに実装
-    await Future.delayed(const Duration(seconds: 1));
-    return email == 'test@example.com' && password == 'password';
+    throw UnimplementedError('新しいAuthServiceを使用してください');
   }
 
-  // ログアウトメソッド
+  @Deprecated('Firebase AuthServiceに移行')
   Future<void> logout() async {
-    // ログアウト処理
-    await Future.delayed(const Duration(seconds: 1));
+    throw UnimplementedError('新しいAuthServiceを使用してください');
   }
 
-  // パスワードリセット
+  @Deprecated('Firebase AuthServiceに移行')
   Future<bool> resetPassword(String email) async {
-    // パスワードリセット処理
-    await Future.delayed(const Duration(seconds: 1));
-    return true;
+    throw UnimplementedError('新しいAuthServiceを使用してください');
   }
-} 
+}

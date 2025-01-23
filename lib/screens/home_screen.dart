@@ -4,11 +4,13 @@ import 'package:intl/intl.dart';
 import '../data/models/user.dart';
 import '../logic/services/api_service.dart';
 import '../logic/services/api_cognitive_test_service.dart';
+import 'package:get/get.dart';
+
 import '../logic/services/shared_preferences_service.dart';
 import 'cognitive_test_screen.dart';
 import 'daily_problem_screen.dart';
-import 'login_screen.dart';
 import 'user_profile_screen.dart';
+import '../services/auth_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final Map<String, dynamic>? initialTestResult;
@@ -121,13 +123,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// ログアウト処理を行う
   Future<void> _logout() async {
+    final AuthService authService = Get.find<AuthService>();
+    await authService.signOut();
     await _sharedPreferencesService.clearLoginStatus();
 
     if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-      (Route<dynamic> route) => false,
-    );
+
+    Navigator.pushReplacementNamed(context, '/login');
   }
 
   /// 認知機能テスト結果の色を取得する
