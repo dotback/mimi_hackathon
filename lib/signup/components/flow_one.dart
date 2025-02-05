@@ -50,7 +50,6 @@ class _SignUpOneState extends State<SignUpOne> {
     // レスポンシブなフォントサイズ
     final titleFontSize = isNarrow ? 30.0 : 40.0;
     final labelFontSize = isNarrow ? 14.0 : 16.0;
-    final buttonFontSize = isNarrow ? 14.0 : 16.0;
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -156,13 +155,6 @@ class _SignUpOneState extends State<SignUpOne> {
                                 Get.snackbar("成功", "ユーザー登録完了");
                                 debugPrint("フロー2に遷移します");
                                 flowController.setFlow(2);
-                              } else {
-                                Get.snackbar(
-                                  "エラー",
-                                  "ユーザー登録に失敗しました",
-                                  backgroundColor: Colors.red.withOpacity(0.7),
-                                  colorText: Colors.white,
-                                );
                               }
                             } else {
                               Get.snackbar(

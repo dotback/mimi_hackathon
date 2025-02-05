@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hexcolor/hexcolor.dart';
-import 'package:intl/intl.dart';
 import '../../components/my_button.dart';
 import '../../signup/controller/flow_controller.dart';
 import '../../signup/controller/sign_up_controller.dart';
@@ -37,38 +36,6 @@ class _SignUpTwoState extends State<SignUpTwo> {
 
   SignUpController signUpController = Get.find<SignUpController>();
   FlowController flowController = Get.find<FlowController>();
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null) {
-      setState(() {
-        birthdateController.text = DateFormat('yyyy-MM-dd').format(picked);
-        ageController.text = _calculateAge(picked).toString();
-      });
-    }
-  }
-
-  int _calculateAge(DateTime birthDate) {
-    DateTime currentDate = DateTime.now();
-    int age = currentDate.year - birthDate.year;
-    int month1 = currentDate.month;
-    int month2 = birthDate.month;
-    if (month2 > month1) {
-      age--;
-    } else if (month1 == month2) {
-      int day1 = currentDate.day;
-      int day2 = birthDate.day;
-      if (day2 > day1) {
-        age--;
-      }
-    }
-    return age;
-  }
 
   @override
   Widget build(BuildContext context) {

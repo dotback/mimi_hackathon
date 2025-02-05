@@ -130,12 +130,6 @@ class SignUpController extends GetxController {
       print('ログイン試行: $email');
       print('パスワード長: ${password.length}');
 
-      // Firebaseの初期化を確認
-      if (FirebaseAuth.instance == null) {
-        print('エラー: FirebaseAuthが初期化されていません');
-        return false;
-      }
-
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
 

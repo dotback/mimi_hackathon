@@ -1,5 +1,3 @@
-import 'package:email_validator/email_validator.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hexcolor/hexcolor.dart';
@@ -22,7 +20,7 @@ class LoginBodyScreen extends StatefulWidget {
 class _LoginBodyScreenState extends State<LoginBodyScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  
+
   SignUpController? _signUpController;
   final RxBool _isLoading = false.obs;
 
@@ -42,14 +40,6 @@ class _LoginBodyScreenState extends State<LoginBodyScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  void _debugPrintControllerValues() {
-    if (kDebugMode) {
-      print('デバッグ: メールコントローラー - ${_emailController.text}');
-      print('デバッグ: パスワードコントローラー - ${_passwordController.text}');
-      print('デバッグ: SignUpController email - ${_signUpController?.email}');
-    }
   }
 
   Future<void> _loginButtonPressed() async {
@@ -160,7 +150,8 @@ class _LoginBodyScreenState extends State<LoginBodyScreen> {
                             Row(
                               children: [
                                 IconButton(
-                                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                                  icon: const Icon(Icons.arrow_back,
+                                      color: Colors.black),
                                   onPressed: () => Get.back(),
                                 ),
                                 const SizedBox(width: 20),
@@ -217,7 +208,8 @@ class _LoginBodyScreenState extends State<LoginBodyScreen> {
                                 Obx(
                                   () => _isLoading.value
                                       ? Center(
-                                          child: LoadingAnimationWidget.staggeredDotsWave(
+                                          child: LoadingAnimationWidget
+                                              .staggeredDotsWave(
                                             color: HexColor("#44564a"),
                                             size: 50,
                                           ),
@@ -298,4 +290,3 @@ class _LoginBodyScreenState extends State<LoginBodyScreen> {
     );
   }
 }
-

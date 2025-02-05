@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -165,9 +164,6 @@ class _SignUpThreeState extends State<SignUpThree> {
                     buttonText: 'Upload an image',
                     onPressed: () async {
                       uploadImageFile();
-                      setState(() {
-                        int i = 1 + 1;
-                      });
                     },
                   ),
                   const SizedBox(

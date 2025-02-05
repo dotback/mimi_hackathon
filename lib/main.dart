@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'screens/home_screen.dart';
 import 'login/login_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:get/get.dart';
 
 import 'firebase_options.dart';
 import 'services/auth_service.dart';

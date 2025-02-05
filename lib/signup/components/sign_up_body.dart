@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hexcolor/hexcolor.dart';
 import '../controller/flow_controller.dart';
-import '../controller/sign_up_controller.dart';
 
 import 'flow_one.dart';
 import 'flow_three.dart';
@@ -15,7 +14,6 @@ class SignUpBodyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // コントローラーを確実に初期化
     final FlowController flowController = Get.put(FlowController());
-    final SignUpController signUpController = Get.put(SignUpController());
 
     final mediaQuery = MediaQuery.of(context);
     final screenHeight = mediaQuery.size.height;
@@ -72,13 +70,13 @@ class SignUpBodyScreen extends StatelessWidget {
                                 duration: const Duration(milliseconds: 500),
                                 transitionBuilder: (Widget child,
                                     Animation<double> animation) {
-                                  return SlideTransition(
-                                    position: Tween<Offset>(
-                                      begin: const Offset(1.0, 0.0),
-                                      end: Offset.zero,
-                                    ).animate(animation),
-                                    child: FadeTransition(
-                                      opacity: animation,
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: SlideTransition(
+                                      position: Tween<Offset>(
+                                        begin: const Offset(1.0, 0.0),
+                                        end: Offset.zero,
+                                      ).animate(animation),
                                       child: child,
                                     ),
                                   );

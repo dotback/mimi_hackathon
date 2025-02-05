@@ -129,7 +129,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (!mounted) return;
 
-    Navigator.pushReplacementNamed(context, '/login');
+    // ログイン画面に遷移する前に、画面を更新する
+    setState(() {
+      Navigator.pushReplacementNamed(context, '/login');
+    });
   }
 
   /// 認知機能テスト結果の色を取得する
@@ -146,24 +149,22 @@ class _HomeScreenState extends State<HomeScreen> {
       ListTile(
         leading: const Icon(Icons.home),
         title: const Text('ホーム'),
-        onTap: () => Navigator.pop(context),
+        onTap: () => Get.back(),
       ),
       ListTile(
         leading: const Icon(Icons.person),
         title: const Text('マイプロフィール'),
         onTap: () {
-          Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const UserProfileScreen()),
-          );
+          Get.back();
+          Get.to(() => const UserProfileScreen(),
+              transition: Transition.cupertino);
         },
       ),
       ListTile(
         leading: const Icon(Icons.list),
         title: const Text('テスト結果'),
         onTap: () {
-          Navigator.pop(context);
+          Get.back();
           // TODO: テスト結果画面への遷移を実装
           _showSuccessSnackBar('テスト結果画面は準備中です');
         },
@@ -188,15 +189,16 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.blue,
+            UserAccountsDrawerHeader(
+              accountName: const Text('ユーザー名'),
+              accountEmail: const Text('user@example.com'),
+              currentAccountPicture: const CircleAvatar(
+                backgroundImage: NetworkImage('https://example.com/avatar.png'),
               ),
-              child: Text(
-                'メニュー',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: NetworkImage('https://example.com/header_image.png'),
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
