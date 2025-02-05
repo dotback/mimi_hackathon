@@ -23,6 +23,7 @@ class SignUpOne extends StatefulWidget {
 class _SignUpOneState extends State<SignUpOne> {
   final emailController = TextEditingController().obs;
   final passwordController = TextEditingController().obs;
+  final nameController = TextEditingController().obs;
 
   // コントローラーをGetXから取得
   late SignUpController signUpController;
@@ -107,9 +108,9 @@ class _SignUpOneState extends State<SignUpOne> {
                         hintText: "メールアドレスを入力",
                         obscureText: false,
                         prefixIcon: const Icon(Icons.mail_outline),
-                        onChanged: () {
-                          validateEmail(emailController.value.text);
-                          signUpController.setEmail(emailController.value.text);
+                        onChanged: (String value) {
+                          validateEmail(value);
+                          signUpController.setEmail(value);
                         },
                       ),
                       Padding(
@@ -135,9 +136,8 @@ class _SignUpOneState extends State<SignUpOne> {
                         hintText: "パスワードを入力",
                         obscureText: true,
                         prefixIcon: const Icon(Icons.lock_outline),
-                        onChanged: () {
-                          signUpController
-                              .setPassword(passwordController.value.text);
+                        onChanged: (String value) {
+                          signUpController.setPassword(value);
                         },
                       ),
                       const SizedBox(height: 24),

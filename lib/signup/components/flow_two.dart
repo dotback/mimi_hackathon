@@ -84,8 +84,8 @@ class _SignUpTwoState extends State<SignUpTwo> {
               MyTextField(
                 controller: usernameController,
                 hintText: 'ユーザー名を入力',
-                onChanged: () {
-                  signUpController.setName(usernameController.text);
+                onChanged: (String value) {
+                  signUpController.setName(value);
                 },
                 obscureText: false,
               ),

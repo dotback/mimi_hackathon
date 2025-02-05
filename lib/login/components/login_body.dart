@@ -6,52 +6,98 @@ import 'package:hexcolor/hexcolor.dart';
 import '../../components/my_button.dart';
 import '../../components/my_textfield.dart';
 import '../../signup/sign_up_screen.dart';
+import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import '../../signup/controller/sign_up_controller.dart';
+import '../../screens/home_screen.dart';
 
 class LoginBodyScreen extends StatefulWidget {
-  const LoginBodyScreen({super.key});
+  const LoginBodyScreen({Key? key}) : super(key: key);
 
   @override
   State<LoginBodyScreen> createState() => _LoginBodyScreenState();
 }
 
 class _LoginBodyScreenState extends State<LoginBodyScreen> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  
+  SignUpController? _signUpController;
+  final RxBool _isLoading = false.obs;
 
-  void signUserIn() async {
+  @override
+  void initState() {
+    super.initState();
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: emailController.text, password: passwordController.text);
-    } on FirebaseAuthException catch (e) {
-      showErrorMessage(e.message ?? "ログインに失敗しました");
+      _signUpController = Get.find<SignUpController>();
+    } catch (e) {
+      _signUpController = SignUpController();
+      Get.put(_signUpController!);
     }
   }
 
-  void showErrorMessage(String message) {
-    showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text(message),
-          );
-        });
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
-  String _errorMessage = "";
+  void _debugPrintControllerValues() {
+    if (kDebugMode) {
+      print('デバッグ: メールコントローラー - ${_emailController.text}');
+      print('デバッグ: パスワードコントローラー - ${_passwordController.text}');
+      print('デバッグ: SignUpController email - ${_signUpController?.email}');
+    }
+  }
 
-  void validateEmail(String val) {
-    if (val.isEmpty) {
-      setState(() {
-        _errorMessage = "メールアドレスを入力してください";
-      });
-    } else if (!EmailValidator.validate(val, true)) {
-      setState(() {
-        _errorMessage = "メールアドレスが正しくありません";
-      });
-    } else {
-      setState(() {
-        _errorMessage = "";
-      });
+  Future<void> _loginButtonPressed() async {
+    FocusScope.of(context).unfocus();
+
+    try {
+      if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+        Get.snackbar(
+          "エラー",
+          "メールアドレスとパスワードを入力してください",
+          backgroundColor: Colors.red.withOpacity(0.7),
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      _isLoading.value = true;
+
+      if (_signUpController == null) {
+        throw Exception('SignUpControllerが初期化されていません');
+      }
+
+      bool isLoggedIn = await _signUpController!.loginUser(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
+
+      _isLoading.value = false;
+
+      if (isLoggedIn) {
+        Get.offAll(() => const HomeScreen());
+      } else {
+        Get.snackbar(
+          "エラー",
+          "ログインに失敗しました。メールアドレスまたはパスワードが正しくありません。",
+          backgroundColor: Colors.red.withOpacity(0.7),
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      _isLoading.value = false;
+
+      Get.snackbar(
+        "エラー",
+        "予期せぬエラーが発生しました: $e",
+        backgroundColor: Colors.red.withOpacity(0.7),
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -111,13 +157,22 @@ class _LoginBodyScreenState extends State<LoginBodyScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              "ログイン",
-                              style: GoogleFonts.poppins(
-                                fontSize: 40,
-                                fontWeight: FontWeight.bold,
-                                color: HexColor("#4f4f4f"),
-                              ),
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                                  onPressed: () => Get.back(),
+                                ),
+                                const SizedBox(width: 20),
+                                Text(
+                                  "ログイン",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 40,
+                                    fontWeight: FontWeight.bold,
+                                    color: HexColor("#4f4f4f"),
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 20),
                             Column(
@@ -132,24 +187,13 @@ class _LoginBodyScreenState extends State<LoginBodyScreen> {
                                 ),
                                 const SizedBox(height: 10),
                                 MyTextField(
-                                  onChanged: (() {
-                                    validateEmail(emailController.text);
-                                  }),
-                                  controller: emailController,
-                                  hintText: "メールアドレスを入力してください",
+                                  controller: _emailController,
+                                  hintText: "hello@gmail.com",
                                   obscureText: false,
                                   prefixIcon: const Icon(Icons.mail_outline),
-                                ),
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(8, 0, 0, 0),
-                                  child: Text(
-                                    _errorMessage,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      color: Colors.red,
-                                    ),
-                                  ),
+                                  onChanged: (String value) {
+                                    _signUpController?.setEmail(value);
+                                  },
                                 ),
                                 const SizedBox(height: 10),
                                 Text(
@@ -161,18 +205,30 @@ class _LoginBodyScreenState extends State<LoginBodyScreen> {
                                 ),
                                 const SizedBox(height: 10),
                                 MyTextField(
-                                  controller: passwordController,
-                                  hintText: "パスワードを入力してください",
+                                  controller: _passwordController,
+                                  hintText: "*************",
                                   obscureText: true,
                                   prefixIcon: const Icon(Icons.lock_outline),
+                                  onChanged: (String value) {
+                                    _signUpController?.setPassword(value);
+                                  },
                                 ),
                                 const SizedBox(height: 20),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: MyButton(
-                                    onPressed: signUserIn,
-                                    buttonText: 'ログイン',
-                                  ),
+                                Obx(
+                                  () => _isLoading.value
+                                      ? Center(
+                                          child: LoadingAnimationWidget.staggeredDotsWave(
+                                            color: HexColor("#44564a"),
+                                            size: 50,
+                                          ),
+                                        )
+                                      : SizedBox(
+                                          width: double.infinity,
+                                          child: MyButton(
+                                            buttonText: 'ログイン',
+                                            onPressed: _loginButtonPressed,
+                                          ),
+                                        ),
                                 ),
                                 const SizedBox(height: 12),
                                 Center(
@@ -242,3 +298,4 @@ class _LoginBodyScreenState extends State<LoginBodyScreen> {
     );
   }
 }
+

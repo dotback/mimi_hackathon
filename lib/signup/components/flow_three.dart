@@ -121,9 +121,8 @@ class _SignUpThreeState extends State<SignUpThree> {
                       obscureText: false,
                       prefixIcon: const Icon(Icons.calendar_today_outlined),
                       keyboardType: TextInputType.number,
-                      onChanged: () {
-                        signUpController.setAdmissionYear(
-                            admissionYearController.value.text);
+                      onChanged: (String value) {
+                        signUpController.setAdmissionYear(value);
                       },
                     ),
                   ] else if (signUpController.userType == "Alumni") ...[
@@ -143,9 +142,8 @@ class _SignUpThreeState extends State<SignUpThree> {
                       obscureText: false,
                       prefixIcon: const Icon(Icons.calendar_today_outlined),
                       keyboardType: TextInputType.number,
-                      onChanged: () {
-                        signUpController
-                            .setPassOutYear(passOutYearController.value.text);
+                      onChanged: (String value) {
+                        signUpController.setPassOutYear(value);
                       },
                     ),
                   ] else

@@ -7,7 +7,7 @@ class MyTextField extends StatelessWidget {
   final String hintText;
   final bool obscureText;
   final Icon? prefixIcon;
-  final Function()? onChanged;
+  final void Function(String)? onChanged;
   final TextInputType? keyboardType;
 
   const MyTextField({
@@ -23,11 +23,7 @@ class MyTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
-      onChanged: (value) {
-        if (onChanged != null) {
-          onChanged!();
-        }
-      },
+      onChanged: onChanged,
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
