@@ -1,4 +1,3 @@
-import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
@@ -9,30 +8,13 @@ import 'login/login_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'package:flutter/foundation.dart'
-    show PlatformDispatcher, kDebugMode, kReleaseMode, kProfileMode;
+import 'package:flutter/foundation.dart' show PlatformDispatcher;
 
 import 'firebase_options.dart';
 import 'services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Cloud Run環境かどうかを判定
-  const isCloudRun = bool.fromEnvironment('CLOUD_RUN', defaultValue: false);
-
-  // 環境情報のログ出力
-  print('===== アプリ起動環境情報 =====');
-  print('プラットフォーム: ${Platform.operatingSystem}');
-  print('プラットフォームバージョン: ${Platform.operatingSystemVersion}');
-  print('デバッグモード: $kDebugMode');
-  print('リリースモード: $kReleaseMode');
-  print('プロファイルモード: $kProfileMode');
-  print('Cloud Run環境: $isCloudRun');
-
-  // 端末情報の追加
-  print('デバイスのホスト名: ${Platform.localHostname}');
-  print('ロケール: ${Platform.localeName}');
 
   // 詳細なエラーロギングを追加
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -53,6 +35,9 @@ void main() async {
 
   // 環境変数の読み込み
   String geminiApiKey = '';
+
+  // Cloud Run環境かどうかを判定
+  const isCloudRun = bool.fromEnvironment('CLOUD_RUN', defaultValue: false);
 
   // Cloud Run環境の環境変数を取得
   final cloudRunApiKey = const String.fromEnvironment('GEMINI_API_KEY');
