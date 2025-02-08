@@ -34,20 +34,23 @@ void main() async {
     print('Firebase初期化エラー: $e');
   }
 
-  // 環境変数の読み込み（Web対応）
+  // 環境変数の読み込み（Web/Cloud Run対応）
   try {
-    if (kIsWeb) {
-      await dotenv.load(fileName: '.env');
+    if (kIsWeb || const bool.fromEnvironment('DART_DEFINES')) {
+      // Web環境またはCloud Run環境では.envファイルを読み込まない
+      print('Web/Cloud Run環境のため、.env読み込みをスキップ');
     } else {
       await dotenv.load(fileName: ".env");
+      print('環境変数読み込み成功');
     }
-    print('環境変数読み込み成功');
   } catch (e) {
     print('環境変数読み込みエラー: $e');
   }
 
-  // Gemini APIキーをGetXに登録
-  final geminiApiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+  // 環境変数の取得方法も修正
+  final geminiApiKey = Platform.environment['GEMINI_API_KEY'] ??
+      dotenv.env['GEMINI_API_KEY'] ??
+      '';
   Get.put<String>(geminiApiKey, tag: 'geminiApiKey');
 
   // SharedPreferencesを初期化

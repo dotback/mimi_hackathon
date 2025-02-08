@@ -18,7 +18,10 @@ class LanguageProblemScreen extends StatefulWidget {
 }
 
 class _LanguageProblemScreenState extends State<LanguageProblemScreen>
-    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+    with
+        WidgetsBindingObserver,
+        SingleTickerProviderStateMixin,
+        AutomaticKeepAliveClientMixin {
   final String apiKey = Get.find(tag: 'geminiApiKey');
   late SpeechService _speechService;
   late GenerativeModel _generativeModel;
@@ -39,6 +42,9 @@ class _LanguageProblemScreenState extends State<LanguageProblemScreen>
   List<String> _recognizedTextHistory = [];
   String _currentRecognizedText = '';
   bool _isEvaluationInProgress = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
