@@ -24,11 +24,11 @@ void main() async {
   // AuthServiceをGetに登録
   Get.lazyPut(() => AuthService());
 
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

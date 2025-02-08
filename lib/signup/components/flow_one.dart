@@ -187,12 +187,7 @@ class _SignUpOneState extends State<SignUpOne> {
                                   color: HexColor("#44564a"),
                                 ),
                               ),
-                              onPressed: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginScreen(),
-                                ),
-                              ),
+                              onPressed: () => Get.to(() => LoginScreen()),
                             ),
                           ],
                         ),

@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'home_screen.dart';
-import '../logic/services/create_problem_management.dart';
 import '../logic/services/gemini_problem_generation_service.dart';
 import '../../data/models/user.dart';
+import 'package:get/get.dart';
 
 class CognitiveTestScreen extends StatefulWidget {
   const CognitiveTestScreen({super.key});
@@ -68,7 +68,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
     {
       'question': '今から数字が出るので逆の順番で回答してください',
       'type': 'reverse_number_memory',
-      'memorizedNumbers': ['6', '8', '2', '9'],
+      'memorizedWords': ['6', '8', '2', '9'],
       'timeLimit': 30,
       'multipleChoiceQuestions': [
         {
@@ -173,7 +173,6 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
   int _remainingTime = 0;
   late AnimationController _timerAnimationController;
   late Animation<double> _timerAnimation;
-  final _createProblemManagement = CreateProblemManagement();
   final _apiService = GeminiProblemGenerationService();
 
   @override
@@ -626,27 +625,12 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
     int score = _calculateScore();
     String comment = _generateComment(score);
 
-    // ユーザー情報を取得（仮）
-    User user = await _apiService.fetchUserProfile('dummy_user_id');
-
-    // 問題生成サービスに結果を渡す
-    await _createProblemManagement.generateProblems(user, {
-      'score': score,
-      'comment': comment,
+    Get.offAll(() => HomeScreen(), arguments: {
+      'initialTestResult': {
+        'score': score,
+        'comment': comment,
+      },
     });
-
-    // ホーム画面に戻る
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (context) => HomeScreen(
-          initialTestResult: {
-            'score': score,
-            'comment': comment,
-          },
-        ),
-      ),
-      (Route<dynamic> route) => false,
-    );
   }
 
   // スコアを計算するメソッド

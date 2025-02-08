@@ -11,14 +11,10 @@ import 'cognitive_test_screen.dart';
 import 'daily_problem_screen.dart';
 import 'user_profile_screen.dart';
 import '../services/auth_service.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  final Map<String, dynamic>? initialTestResult;
-
-  const HomeScreen({
-    super.key,
-    this.initialTestResult,
-  });
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -49,8 +45,8 @@ class _HomeScreenState extends State<HomeScreen> {
     await _fetchCognitiveTestResult();
 
     // 初期テスト結果がある場合は保存する
-    if (widget.initialTestResult != null) {
-      await _saveInitialTestResult();
+    if (Get.arguments != null && Get.arguments['initialTestResult'] != null) {
+      await _saveInitialTestResult(Get.arguments['initialTestResult']);
     }
   }
 
@@ -70,14 +66,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// 初期テスト結果を保存する
-  Future<void> _saveInitialTestResult() async {
+  Future<void> _saveInitialTestResult(
+      Map<String, dynamic> initialTestResult) async {
     try {
       User user = await _user;
 
       User updatedUser = await _cognitiveTestService.saveCognitiveTestResult(
         user: user,
-        cognitiveFunctionScore: widget.initialTestResult!['score'],
-        cognitiveFunctionComment: widget.initialTestResult!['comment'],
+        cognitiveFunctionScore: initialTestResult['score'],
+        cognitiveFunctionComment: initialTestResult['comment'],
       );
 
       setState(() {
@@ -88,14 +85,13 @@ class _HomeScreenState extends State<HomeScreen> {
           await _cognitiveTestService.getLocalCognitiveTestResult();
       setState(() {
         _cognitiveTestResult = {
-          'score': widget.initialTestResult!['score'],
-          'comment': widget.initialTestResult!['comment'],
+          'score': initialTestResult['score'],
+          'comment': initialTestResult['comment'],
           'date': localResult?['date'] ?? DateTime.now().toIso8601String(),
         };
       });
 
-      _showSuccessSnackBar(
-          '認知機能テスト結果: スコア ${widget.initialTestResult!['score']} / 10');
+      _showSuccessSnackBar('認知機能テスト結果: スコア ${initialTestResult['score']} / 10');
     } catch (e) {
       _showErrorSnackBar('テスト結果の保存に失敗しました: $e');
     }
@@ -130,9 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
 
     // ログイン画面に遷移する前に、画面を更新する
-    setState(() {
-      Navigator.pushReplacementNamed(context, '/login');
-    });
+    Get.off(() => LoginScreen());
   }
 
   /// 認知機能テスト結果の色を取得する
@@ -149,7 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ListTile(
         leading: const Icon(Icons.home),
         title: const Text('ホーム'),
-        onTap: () => Get.back(),
+        onTap: () => Navigator.pop(context),
       ),
       ListTile(
         leading: const Icon(Icons.person),
@@ -333,11 +327,7 @@ class _HomeScreenState extends State<HomeScreen> {
             minimumSize: const Size(double.infinity, 48),
           ),
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const DailyProblemScreen()),
-            );
+            Get.to(() => DailyProblemScreen());
           },
           child: const Text('今日の問題を解く'),
         ),
@@ -352,16 +342,7 @@ class _HomeScreenState extends State<HomeScreen> {
         minimumSize: const Size(200, 48),
       ),
       onPressed: () async {
-        final result = await Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const CognitiveTestScreen()),
-        );
-
-        // テスト結果が返ってきたら、ローカルのテスト結果とユーザープロファイルを更新
-        if (result != null) {
-          await _fetchCognitiveTestResult();
-          _fetchUserProfile();
-        }
+        Get.to(() => CognitiveTestScreen());
       },
       child: const Text('認知機能テストを受ける'),
     );

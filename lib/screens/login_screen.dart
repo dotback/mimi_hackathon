@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -100,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ElevatedButton(
                 onPressed: () {
                   // ログインまたは新規登録の処理
-                  Navigator.of(context).pop();
+                  Get.back();
                 },
                 child: Text('メールアドレスで${_isLogin ? 'ログイン' : '新規登録'}'),
                 style: ElevatedButton.styleFrom(
@@ -115,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
               TextButton(
                 onPressed: () {
                   // パスワードを忘れた場合の処理
-                  Navigator.of(context).pop();
+                  Get.back();
                 },
                 child: Text('パスワードをお忘れの方はこちら'),
               ),
@@ -125,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ElevatedButton(
                 onPressed: () {
                   // Googleでログインの処理
-                  Navigator.of(context).pop();
+                  Get.back();
                 },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -146,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ElevatedButton(
                 onPressed: () {
                   // Appleでログインの処理
-                  Navigator.of(context).pop();
+                  Get.back();
                 },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

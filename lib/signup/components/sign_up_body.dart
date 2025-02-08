@@ -66,21 +66,8 @@ class SignUpBodyScreen extends StatelessWidget {
                           child: GetBuilder<FlowController>(
                             init: flowController,
                             builder: (controller) {
-                              return AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 500),
-                                transitionBuilder: (Widget child,
-                                    Animation<double> animation) {
-                                  return FadeTransition(
-                                    opacity: animation,
-                                    child: SlideTransition(
-                                      position: Tween<Offset>(
-                                        begin: const Offset(1.0, 0.0),
-                                        end: Offset.zero,
-                                      ).animate(animation),
-                                      child: child,
-                                    ),
-                                  );
-                                },
+                              return Opacity(
+                                opacity: 1.0,
                                 child: _buildSignUpFlow(
                                   controller.currentFlow,
                                   isNarrow,
