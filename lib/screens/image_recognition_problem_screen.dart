@@ -188,34 +188,43 @@ class _ImageRecognitionProblemScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('画像認識問題'),
+        title: Text('画像認識問題', style: TextStyle(fontWeight: FontWeight.w600)),
+        backgroundColor: Colors.deepPurple[500],
+        elevation: 0,
         actions: [
           if (_currentState != ScreenState.imageSelection)
             IconButton(
-              icon: Icon(Icons.restart_alt),
+              icon: Icon(Icons.restart_alt, color: Colors.white),
               onPressed: _resetScreen,
             ),
         ],
       ),
       body: SingleChildScrollView(
+        physics: BouncingScrollPhysics(),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // 問題説明
               Card(
-                elevation: 4,
+                elevation: 6,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(20.0),
                   child: Text(
                     widget.problem.description,
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w500,
+                          color: Colors.deepPurple[800],
+                        ),
                     textAlign: TextAlign.center,
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              SizedBox(height: 20),
 
               // 画像選択状態
               if (_currentState == ScreenState.imageSelection)
@@ -223,17 +232,20 @@ class _ImageRecognitionProblemScreenState
                   children: [
                     Text(
                       '画像を選択してください',
-                      style: Theme.of(context).textTheme.titleMedium,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.deepPurple[700],
+                            fontWeight: FontWeight.w600,
+                          ),
                       textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: 16),
+                    SizedBox(height: 20),
                     GridView.builder(
                       shrinkWrap: true,
                       physics: NeverScrollableScrollPhysics(),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 3,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
                       ),
                       itemCount: _predefinedImages.length,
                       itemBuilder: (context, index) {
@@ -241,21 +253,28 @@ class _ImageRecognitionProblemScreenState
                           onTap: () => _selectImage(_predefinedImages[index]),
                           child: Container(
                             decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(15),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 8,
+                                  offset: Offset(0, 4),
+                                )
+                              ],
                               border: Border.all(
                                 color:
                                     _selectedImage == _predefinedImages[index]
-                                        ? Colors.blue
-                                        : Colors.grey,
-                                width:
-                                    _selectedImage == _predefinedImages[index]
-                                        ? 3
-                                        : 1,
+                                        ? Colors.deepPurple
+                                        : Colors.transparent,
+                                width: 3,
                               ),
-                              borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Image.asset(
-                              _predefinedImages[index],
-                              fit: BoxFit.cover,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.asset(
+                                _predefinedImages[index],
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                         );
@@ -269,19 +288,31 @@ class _ImageRecognitionProblemScreenState
                 Column(
                   children: [
                     Card(
-                      elevation: 4,
-                      child: Image.asset(
-                        _selectedImage!,
-                        height: 250,
-                        fit: BoxFit.contain,
+                      elevation: 8,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: Image.asset(
+                          _selectedImage!,
+                          height: 300,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
-                    SizedBox(height: 16),
+                    SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: _processImage,
-                      child: Text('問題を生成'),
+                      child: Text('問題を生成', style: TextStyle(fontSize: 16)),
                       style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.deepPurple[500],
+                        padding:
+                            EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 5,
                       ),
                     ),
                   ],
@@ -293,57 +324,82 @@ class _ImageRecognitionProblemScreenState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Card(
-                      elevation: 4,
-                      child: Image.asset(
-                        _selectedImage!,
-                        height: 250,
-                        fit: BoxFit.contain,
+                      elevation: 8,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: Image.asset(
+                          _selectedImage!,
+                          height: 300,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
-                    SizedBox(height: 16),
+                    SizedBox(height: 20),
                     Card(
                       elevation: 4,
-                      color: Colors.blue.shade50,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      color: Colors.deepPurple.shade50,
                       child: Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.all(20.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               '問題',
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.blue.shade900,
+                                color: Colors.deepPurple.shade900,
                               ),
                             ),
-                            SizedBox(height: 8),
+                            SizedBox(height: 12),
                             Text(
                               _problemDetails!['problem'],
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.black87,
+                                height: 1.5,
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                    SizedBox(height: 16),
+                    SizedBox(height: 20),
                     TextField(
                       controller: _answerController,
                       decoration: InputDecoration(
                         hintText: '回答を入力してください',
-                        border: OutlineInputBorder(),
+                        hintStyle: TextStyle(color: Colors.grey[600]),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.deepPurple),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              BorderSide(color: Colors.deepPurple, width: 2),
+                        ),
                       ),
                       maxLines: 3,
                     ),
-                    SizedBox(height: 16),
+                    SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: _submitAnswer,
-                      child: Text('回答を提出'),
+                      child: Text('回答を提出', style: TextStyle(fontSize: 16)),
                       style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.deepPurple[500],
+                        padding:
+                            EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 5,
                       ),
                     ),
                   ],
@@ -359,7 +415,7 @@ class _ImageRecognitionProblemScreenState
                   child: Column(
                     children: [
                       LoadingAnimationWidget.staggeredDotsWave(
-                        color: Colors.blue,
+                        color: Colors.deepPurple,
                         size: 80,
                       ),
                       SizedBox(height: 16),
@@ -369,7 +425,7 @@ class _ImageRecognitionProblemScreenState
                             : 'Gemini AIが回答を確認しています...',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.blue,
+                          color: Colors.deepPurple,
                           fontWeight: FontWeight.bold,
                         ),
                         textAlign: TextAlign.center,
@@ -379,6 +435,54 @@ class _ImageRecognitionProblemScreenState
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailCard({
+    required String title,
+    required String content,
+    required Color color,
+    required IconData icon,
+    required Color iconColor,
+  }) {
+    return Card(
+      elevation: 6,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      color: color,
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: iconColor, size: 32),
+                SizedBox(width: 12),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            Text(
+              content,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+                height: 1.6,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -394,10 +498,10 @@ class _ImageRecognitionProblemScreenState
           content: _evaluationResult!['userAnswer'],
           color: Colors.grey.shade100,
           icon: Icons.chat_outlined,
-          iconColor: Colors.grey,
+          iconColor: Colors.grey.shade700,
         ),
 
-        SizedBox(height: 16),
+        SizedBox(height: 20),
 
         // 正誤カード
         _buildDetailCard(
@@ -409,22 +513,23 @@ class _ImageRecognitionProblemScreenState
           icon: _evaluationResult!['isCorrect']
               ? Icons.check_circle_outline
               : Icons.lightbulb_outline,
-          iconColor:
-              _evaluationResult!['isCorrect'] ? Colors.green : Colors.orange,
+          iconColor: _evaluationResult!['isCorrect']
+              ? Colors.green.shade700
+              : Colors.orange.shade700,
         ),
 
-        SizedBox(height: 16),
+        SizedBox(height: 20),
 
         // 説明カード
         _buildDetailCard(
           title: '回答分析',
           content: _evaluationResult!['explanation'],
-          color: Colors.blue.shade50,
+          color: Colors.deepPurple.shade50,
           icon: Icons.psychology_outlined,
-          iconColor: Colors.blue,
+          iconColor: Colors.deepPurple.shade700,
         ),
 
-        SizedBox(height: 16),
+        SizedBox(height: 20),
 
         // 改善点カード
         _buildDetailCard(
@@ -432,10 +537,10 @@ class _ImageRecognitionProblemScreenState
           content: _evaluationResult!['improvements'],
           color: Colors.purple.shade50,
           icon: Icons.tips_and_updates_outlined,
-          iconColor: Colors.purple,
+          iconColor: Colors.purple.shade700,
         ),
 
-        SizedBox(height: 16),
+        SizedBox(height: 20),
 
         // 正解カード
         _buildDetailCard(
@@ -443,53 +548,9 @@ class _ImageRecognitionProblemScreenState
           content: _problemDetails!['correctAnswer'],
           color: Colors.amber.shade50,
           icon: Icons.stars_outlined,
-          iconColor: Colors.amber,
+          iconColor: Colors.amber.shade700,
         ),
       ],
-    );
-  }
-
-  Widget _buildDetailCard({
-    required String title,
-    required String content,
-    required Color color,
-    required IconData icon,
-    required Color iconColor,
-  }) {
-    return Card(
-      elevation: 4,
-      color: color,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: iconColor, size: 28),
-                SizedBox(width: 10),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12),
-            Text(
-              content,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.black87,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
