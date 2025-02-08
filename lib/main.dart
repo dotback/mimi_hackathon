@@ -40,6 +40,8 @@ void main() async {
   try {
     // Cloud Run環境の環境変数を最初に確認
     cloudRunApiKey = const String.fromEnvironment('GEMINI_API_KEY');
+    print('Cloud Run環境: Gemini APIキーが正常に読み込まれました');
+    print('cloudRunApiKey: ' + cloudRunApiKey);
   } catch (e) {
     print('Cloud Run環境変数の読み込みエラー: $e');
   }
