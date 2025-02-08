@@ -12,6 +12,7 @@ import 'package:flutter/foundation.dart' show PlatformDispatcher;
 
 import 'firebase_options.dart';
 import 'services/auth_service.dart';
+import 'dart:io' show Platform;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,7 +38,7 @@ void main() async {
   String geminiApiKey = '';
 
   // Cloud Run環境の環境変数を最初に確認
-  final cloudRunApiKey = const String.fromEnvironment('GEMINI_API_KEY');
+  final cloudRunApiKey = Platform.environment['GEMINI_API_KEY'] ?? '';
 
   if (cloudRunApiKey.isNotEmpty) {
     // Cloud Run環境変数が存在する場合はそれを使用
