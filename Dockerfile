@@ -44,7 +44,7 @@ RUN flutter pub get
 COPY . .
 
 # Webアプリのビルド（リリースモード、詳細ログ）
-RUN flutter build web --release --verbose
+RUN flutter build web --release
 
 # 軽量なウェブサーバーを使用する最終ステージ
 FROM nginx:alpine
