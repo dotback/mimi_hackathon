@@ -33,7 +33,7 @@ void main() async {
     print('Firebase初期化エラー: $e');
   }
 
-  // 環境変数の読み込み
+  // 環境変数の読み込
   String geminiApiKey = '';
   String cloudRunApiKey = '';
 
