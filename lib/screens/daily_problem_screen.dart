@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../data/models/problem_result.dart';
 import '../data/models/problem.dart';
 import '../logic/services/problem_service.dart';
+import 'problem_solve_screen.dart';
+import 'language_problem_screen.dart';
 
 class DailyProblemScreen extends StatefulWidget {
   const DailyProblemScreen({super.key});
@@ -250,10 +252,25 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
   }
 
   void _startProblem(Problem problem) {
-    // TODO: 各問題の詳細画面に遷移
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${problem.title}を開始します')),
-    );
+    // カテゴリに応じて適切な画面に遷移
+    switch (problem.category) {
+      case ProblemCategory.language:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LanguageProblemScreen(problem: problem),
+          ),
+        );
+        break;
+      default:
+        // 他のカテゴリの問題は既存の問題解決画面に遷移
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProblemSolveScreen(problem: problem),
+          ),
+        );
+    }
   }
 
   String _getCategoryName(ProblemCategory category) {

@@ -58,7 +58,8 @@ class _LoginBodyScreenState extends State<LoginBodyScreen> {
       _isLoading.value = true;
 
       if (_signUpController == null) {
-        throw Exception('SignUpControllerが初期化されていません');
+        _signUpController = SignUpController();
+        Get.put(_signUpController!);
       }
 
       bool isLoggedIn = await _signUpController!.loginUser(
@@ -69,7 +70,10 @@ class _LoginBodyScreenState extends State<LoginBodyScreen> {
       _isLoading.value = false;
 
       if (isLoggedIn) {
-        Get.offAll(() => const HomeScreen());
+        await Future.delayed(const Duration(milliseconds: 100));
+        Get.offAll(() => const HomeScreen(),
+            transition: Transition.fadeIn,
+            duration: const Duration(milliseconds: 500));
       } else {
         Get.snackbar(
           "エラー",
@@ -87,6 +91,8 @@ class _LoginBodyScreenState extends State<LoginBodyScreen> {
         backgroundColor: Colors.red.withOpacity(0.7),
         colorText: Colors.white,
       );
+    } finally {
+      _isLoading.value = false;
     }
   }
 

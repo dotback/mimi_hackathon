@@ -6,6 +6,7 @@ class Problem {
   final String description;
   final ProblemCategory category;
   final int difficulty;
+  final dynamic correctAnswer;
   final String? question;
   final List<String>? answers;
   final String? imagePath;
@@ -17,6 +18,7 @@ class Problem {
     required this.description,
     required this.category,
     this.difficulty = 1,
+    this.correctAnswer,
     this.question,
     this.answers,
     this.imagePath,
@@ -33,6 +35,7 @@ class Problem {
             e.toString() == 'ProblemCategory.${json['category'] ?? 'memory'}',
       ),
       difficulty: json['difficulty'] ?? 1,
+      correctAnswer: json['correctAnswer'],
       question: json['question'],
       answers:
           json['answers'] != null ? List<String>.from(json['answers']) : null,
@@ -50,6 +53,7 @@ class Problem {
       'description': description,
       'category': category.toString().split('.').last,
       'difficulty': difficulty,
+      'correctAnswer': correctAnswer,
       'question': question,
       'answers': answers,
       'imagePath': imagePath,

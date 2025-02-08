@@ -39,6 +39,15 @@ class _HomeScreenState extends State<HomeScreen> {
     _initializeData();
   }
 
+  @override
+  void dispose() {
+    // サービスのクリーンアップ
+    // _apiService.dispose();
+    // _cognitiveTestService.dispose();
+    // _sharedPreferencesService.dispose();
+    super.dispose();
+  }
+
   /// ユーザープロファイルと認知機能テスト結果を初期化する
   Future<void> _initializeData() async {
     _fetchUserProfile();
@@ -126,7 +135,12 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
 
     // ログイン画面に遷移する前に、画面を更新する
-    Get.off(() => LoginScreen());
+    Get.offAll(
+      () => const LoginScreen(),
+      transition: Transition.fadeIn,
+      duration: const Duration(milliseconds: 300),
+      predicate: (route) => false,
+    );
   }
 
   /// 認知機能テスト結果の色を取得する
@@ -150,8 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('マイプロフィール'),
         onTap: () {
           Get.back();
-          Get.to(() => const UserProfileScreen(),
-              transition: Transition.cupertino);
+          Get.off(() => const UserProfileScreen());
         },
       ),
       ListTile(
@@ -327,7 +340,12 @@ class _HomeScreenState extends State<HomeScreen> {
             minimumSize: const Size(double.infinity, 48),
           ),
           onPressed: () {
-            Get.to(() => DailyProblemScreen());
+            // ナビゲーション時に遷移アニメーションを追加
+            Get.offAll(
+              () => DailyProblemScreen(),
+              transition: Transition.fadeIn,
+              duration: const Duration(milliseconds: 300),
+            );
           },
           child: const Text('今日の問題を解く'),
         ),
@@ -342,7 +360,12 @@ class _HomeScreenState extends State<HomeScreen> {
         minimumSize: const Size(200, 48),
       ),
       onPressed: () async {
-        Get.to(() => CognitiveTestScreen());
+        // ナビゲーション時に遷移アニメーションを追加
+        Get.offAll(
+          () => const CognitiveTestScreen(),
+          transition: Transition.fadeIn,
+          duration: const Duration(milliseconds: 300),
+        );
       },
       child: const Text('認知機能テストを受ける'),
     );
