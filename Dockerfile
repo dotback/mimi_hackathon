@@ -43,8 +43,8 @@ RUN flutter pub get
 # プロジェクト全体のコピー
 COPY . .
 
-# Webアプリのビルド（デバッグ情報を追加）
-RUN flutter build web --verbose
+# Webアプリのビルド（リリースモード、詳細ログ）
+RUN flutter build web --release --verbose
 
 # 軽量なウェブサーバーを使用する最終ステージ
 FROM nginx:alpine

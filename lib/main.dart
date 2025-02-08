@@ -36,39 +36,26 @@ void main() async {
   // 環境変数の読み込み
   String geminiApiKey = '';
 
-  // Cloud Run環境かどうかを判定
-  const isCloudRun = bool.fromEnvironment('CLOUD_RUN', defaultValue: false);
-
-  // Cloud Run環境の環境変数を取得
+  // Cloud Run環境の環境変数を最初に確認
   final cloudRunApiKey = const String.fromEnvironment('GEMINI_API_KEY');
 
-  if (isCloudRun) {
-    try {
-      if (cloudRunApiKey.isNotEmpty) {
-        geminiApiKey = cloudRunApiKey;
-        Get.put<String>(geminiApiKey, tag: 'geminiApiKey');
-        print('Cloud Run環境: Gemini APIキーが正常に読み込まれました');
-        print('Cloud Run APIキーの長さ: ${geminiApiKey.length}');
-      }
-
-      if (geminiApiKey.isEmpty) {
-        print('警告: Cloud Run環境でGemini APIキーが見つかりませんでした');
-      }
-    } catch (e) {
-      print('Cloud Run環境変数読み込みエラー: $e');
-    }
+  if (cloudRunApiKey.isNotEmpty) {
+    // Cloud Run環境変数が存在する場合はそれを使用
+    geminiApiKey = cloudRunApiKey;
+    print('Cloud Run環境: Gemini APIキーが正常に読み込まれました');
   } else {
-    // ローカル環境用の通常の.env読み込み
+    // Cloud Run環境変数がない場合は.envから読み込み
     await dotenv.load(fileName: '.env');
     geminiApiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+    print('ローカル環境: .envからGemini APIキーを読み込みました');
+  }
 
-    if (geminiApiKey.isNotEmpty) {
-      Get.put<String>(geminiApiKey, tag: 'geminiApiKey');
-      print('ローカル環境: Gemini APIキーが正常に読み込まれました');
-      print('ローカル環境 APIキーの長さ: ${geminiApiKey.length}');
-    } else {
-      print('警告: ローカル環境で.envからGemini APIキーが見つかりませんでした');
-    }
+  // APIキーが取得できた場合のみGetXに登録
+  if (geminiApiKey.isNotEmpty) {
+    Get.put<String>(geminiApiKey, tag: 'geminiApiKey');
+    print('APIキーの長さ: ${geminiApiKey.length}');
+  } else {
+    print('警告: Gemini APIキーが見つかりませんでした');
   }
 
   // SharedPreferencesを初期化
