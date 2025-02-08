@@ -57,7 +57,7 @@ class SpeechService {
 
   SpeechService(String apiKey)
       : _generativeModel =
-            GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+            GenerativeModel(model: 'gemini-2.0-flash', apiKey: apiKey);
 
   // テキストを音声に変換
   Future<void> speak(String text) async {
@@ -262,7 +262,7 @@ class SpeechService {
         "isCorrect": true,
         "userAnswer": "音声認識された回答",
         "result": "とても良い",
-        "improvements": "素晴らしい思い出を話してくれてありがとう。もっと詳しく教えてもらえると嬉しいです。",
+        "improvements": "素晴らしい思い出を話してくれてありがとうございます。もっと詳しく教えてもらえると嬉しいです。",
         "explanation": "あなたの大切な思い出を聞けて、とても嬉しいです。"
       }
 

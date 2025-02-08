@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'screens/home_screen.dart';
 import 'login/login_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:flutter/foundation.dart' show PlatformDispatcher;
 
@@ -22,6 +23,7 @@ void main() async {
     FlutterError.dumpErrorToConsole(details);
   };
 
+  // Firebase初期化
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -31,8 +33,21 @@ void main() async {
     print('Firebase初期化エラー: $e');
   }
 
-  // 環境変数の取得方法も修正
-  final geminiApiKey = const String.fromEnvironment('GEMINI_API_KEY');
+  // 環境変数の読み込み
+  String geminiApiKey = '';
+  try {
+    await dotenv.load(fileName: '.env');
+    final geminiApiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+    Get.put<String>(geminiApiKey, tag: 'geminiApiKey');
+
+    // それでも空の場合はエラーログ
+    if (geminiApiKey.isEmpty) {
+      print('警告: Gemini APIキーが見つかりませんでした');
+    }
+  } catch (e) {
+    print('環境変数読み込みエラー: $e');
+  }
+
   Get.put<String>(geminiApiKey, tag: 'geminiApiKey');
 
   // SharedPreferencesを初期化
@@ -96,15 +111,9 @@ class MyApp extends StatelessWidget {
           maintainState: false,
         ),
       ],
-      home: const LoginScreen(),
-      builder: (context, child) {
-        return Directionality(
-          textDirection: TextDirection.ltr,
-          child: child ?? Container(),
-        );
-      },
       defaultTransition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 300),
+      navigatorKey: Get.key,
     );
   }
 }

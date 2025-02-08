@@ -66,7 +66,8 @@ class _LanguageProblemScreenState extends State<LanguageProblemScreen>
 
     try {
       _speechService = SpeechService(apiKey);
-      _generativeModel = GenerativeModel(model: 'gemini-pro', apiKey: apiKey);
+      _generativeModel =
+          GenerativeModel(model: 'gemini-2.0-flash', apiKey: apiKey);
 
       // 問題文の読み上げを自動開始
       _startProblemDescription();

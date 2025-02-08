@@ -52,13 +52,18 @@ dependencies:
   flutter_tts: ^3.8.3
   speech_to_text: ^6.3.0
   permission_handler: ^11.0.1
-  flutter_dotenv: ^5.2.1
+  flutter_dotenv: ^5.2.0
   record: ^4.4.4
   path_provider: ^2.1.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^1.0.2
+
+  # アセット画像のロード用
+  flutter_svg: ^2.0.7
+  envied: ^0.5.3
+  build_runner: ^2.4.0
 
 dev_dependencies:
   flutter_test:
@@ -69,7 +74,9 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^2.0.0
+
+  envied_generator: ^0.5.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -84,7 +91,24 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/R6A_0329.jpg
-    - assets/images/
+    - assets/images/seascape-morning-beautiful-sunrise-calm-sea-reflection-sea_416511-7697.png
+    - assets/images/key.png
+    - assets/images/pencil.png
+    - assets/images/clock.png
+    - assets/question_images/1000002275.jpg
+    - assets/question_images/1000002209.jpg
+    - assets/question_images/1000002171.jpg
+    - assets/question_images/1000001815.jpg
+    - assets/question_images/1000001375.jpg
+    - assets/question_images/1000001412.jpg
+    - assets/question_images/1000001442.jpg
+    - assets/question_images/1000001160.jpg
+    - assets/question_images/1000000891.jpg
+    - assets/question_images/1000001320.jpg
+    - assets/question_images/1000000832.jpg
+    - assets/question_images/1000000191.jpg
+    - assets/question_images/1000000134.jpg
+    - assets/question_images/1000002288.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

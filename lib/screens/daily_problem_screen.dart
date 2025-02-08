@@ -7,6 +7,7 @@ import '../data/models/problem.dart';
 import '../logic/services/problem_service.dart';
 import 'problem_solve_screen.dart';
 import 'language_problem_screen.dart';
+import 'image_recognition_problem_screen.dart';
 
 class DailyProblemScreen extends StatefulWidget {
   const DailyProblemScreen({super.key});
@@ -374,6 +375,15 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
           context,
           MaterialPageRoute(
             builder: (context) => LanguageProblemScreen(problem: problem),
+          ),
+        );
+        break;
+      case ProblemCategory.memory:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                ImageRecognitionProblemScreen(problem: problem),
           ),
         );
         break;
