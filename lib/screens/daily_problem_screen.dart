@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:intl/intl.dart';
 import '../data/models/problem_result.dart';
 import '../data/models/problem.dart';
@@ -17,97 +18,192 @@ class DailyProblemScreen extends StatefulWidget {
 class _DailyProblemScreenState extends State<DailyProblemScreen> {
   final ProblemService _problemService = ProblemService();
   late Future<List<Problem>> _dailyProblems;
-  late Future<Map<ProblemCategory, double>> _categoryPerformance;
   late Future<List<ProblemResult>> _problemResultTrends;
 
-  // モックデータ (DB連携が実装されたら置き換える)
-  final int _mockTodaysScore = 75;
-  final String _mockEncouragementMessage = '素晴らしい！その調子です！';
+  // モックデータ
+  final int _mockTodaysScore = 85;
+  final String _mockEncouragementMessage = '素晴らしい進歩です！継続は力なり！';
+  final Map<ProblemCategory, double> _mockCategoryPerformance = {
+    ProblemCategory.memory: 0.85,
+    ProblemCategory.recall: 0.72,
+    ProblemCategory.calculation: 0.65,
+    ProblemCategory.language: 0.90,
+    ProblemCategory.orientation: 0.78,
+  };
+
+  // 点数の推移のモックデータ
+  final List<ProblemResult> _mockProblemResultTrends = [
+    ProblemResult(
+      problemId: '1',
+      isCorrect: true,
+      date: DateTime.now().subtract(Duration(days: 6)),
+      score: 65,
+    ),
+    ProblemResult(
+      problemId: '2',
+      isCorrect: true,
+      date: DateTime.now().subtract(Duration(days: 5)),
+      score: 72,
+    ),
+    ProblemResult(
+      problemId: '3',
+      isCorrect: false,
+      date: DateTime.now().subtract(Duration(days: 4)),
+      score: 68,
+    ),
+    ProblemResult(
+      problemId: '4',
+      isCorrect: true,
+      date: DateTime.now().subtract(Duration(days: 3)),
+      score: 75,
+    ),
+    ProblemResult(
+      problemId: '5',
+      isCorrect: true,
+      date: DateTime.now().subtract(Duration(days: 2)),
+      score: 80,
+    ),
+    ProblemResult(
+      problemId: '6',
+      isCorrect: true,
+      date: DateTime.now().subtract(Duration(days: 1)),
+      score: 82,
+    ),
+    ProblemResult(
+      problemId: '7',
+      isCorrect: true,
+      date: DateTime.now(),
+      score: 85,
+    ),
+  ];
 
   @override
   void initState() {
     super.initState();
     _dailyProblems = _problemService.generateDailyProblems();
-    _categoryPerformance = _problemService.getCategoryPerformance();
-    _problemResultTrends = _problemService.getProblemResultTrends();
+    _problemResultTrends = Future.value(_mockProblemResultTrends);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('今日の問題'),
+        title: const Text('認知トレーニング',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildTodaysScoreSection(context),
-              _buildPerformanceChartSection(context),
-              _buildCategoryPerformanceSection(context),
-              _buildProblemListSection(context),
-            ],
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTodaysScoreSection(context),
+                const SizedBox(height: 16),
+                _buildPerformanceChartSection(context),
+                const SizedBox(height: 16),
+                _buildCategoryPerformanceSection(context),
+                const SizedBox(height: 16),
+                _buildProblemListSection(context),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // 今日の点数セクション
   Widget _buildTodaysScoreSection(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.blue.shade300, Colors.blue.shade600],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.shade200.withOpacity(0.5),
+            spreadRadius: 2,
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '今日の点数',
-            style: Theme.of(context).textTheme.titleLarge,
+            '今日の成績',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 '$_mockTodaysScore点',
                 style: TextStyle(
-                  fontSize: 36,
+                  fontSize: 48,
                   fontWeight: FontWeight.bold,
-                  color: _getScoreColor(_mockTodaysScore),
+                  color: Colors.white,
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.emoji_events,
-                size: 48,
-                color: Colors.amber,
+                size: 64,
+                color: Colors.amber.shade200,
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             _mockEncouragementMessage,
-            style: Theme.of(context).textTheme.bodyLarge,
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
+            ),
           ),
         ],
       ),
     );
   }
 
-  // パフォーマンスチャートセクション
   Widget _buildPerformanceChartSection(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade300,
+            spreadRadius: 1,
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'これまでの点数',
+            '点数の推移',
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 8),
           SizedBox(
-            height: 200,
+            height: 250,
             child: FutureBuilder<List<ProblemResult>>(
               future: _problemResultTrends,
               builder: (context, snapshot) {
@@ -135,14 +231,21 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
                       xValueMapper: (ProblemResult result, _) => result.date,
                       yValueMapper: (ProblemResult result, _) => result.score,
                       name: '点数',
-                      markerSettings: const MarkerSettings(isVisible: true),
+                      color: Colors.blue,
+                      width: 4,
+                      markerSettings: const MarkerSettings(
+                        isVisible: true,
+                        color: Colors.blue,
+                        borderColor: Colors.white,
+                        borderWidth: 2,
+                      ),
                     ),
                   ],
                   trackballBehavior: TrackballBehavior(
                     enable: true,
                     activationMode: ActivationMode.singleTap,
                     tooltipSettings: const InteractiveTooltip(
-                      format: 'point.x : point.y',
+                      format: 'point.x : point.y点',
                     ),
                   ),
                 );
@@ -154,10 +257,21 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
     );
   }
 
-  // カテゴリ別パフォーマンスセクション
   Widget _buildCategoryPerformanceSection(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade300,
+            spreadRadius: 1,
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -166,47 +280,48 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 8),
-          FutureBuilder<Map<ProblemCategory, double>>(
-            future: _categoryPerformance,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return const Center(child: Text('エラーが発生しました'));
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text('データがありません'));
-              }
-
-              return Column(
-                children: snapshot.data!.entries
-                    .map(
-                      (entry) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(_getCategoryName(entry.key)),
-                            Text(
-                              '${(entry.value * 100).toStringAsFixed(1)}%',
-                              style: TextStyle(
-                                color: _getPerformanceColor(entry.value),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+          SizedBox(
+            height: 250,
+            child: SfRadialGauge(
+              axes: <RadialAxis>[
+                RadialAxis(
+                  minimum: 0,
+                  maximum: 1,
+                  ranges: <GaugeRange>[
+                    GaugeRange(
+                      startValue: 0,
+                      endValue: 1,
+                      color: Colors.grey.shade200,
+                      startWidth: 10,
+                      endWidth: 10,
                     )
-                    .toList(),
-              );
-            },
+                  ],
+                  pointers: _mockCategoryPerformance.entries.map((entry) {
+                    return RangePointer(
+                      value: entry.value,
+                      color: _getPerformanceColor(entry.value),
+                      width: 10,
+                    );
+                  }).toList(),
+                  annotations: _mockCategoryPerformance.entries.map((entry) {
+                    return GaugeAnnotation(
+                      angle: _getCategoryAngle(entry.key),
+                      positionFactor: 1.1,
+                      widget: Text(
+                        _getCategoryName(entry.key),
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    );
+                  }).toList(),
+                )
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  // 今日の問題リストセクション
   Widget _buildProblemListSection(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -307,9 +422,18 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
     return Colors.red;
   }
 
-  Color _getScoreColor(int score) {
-    if (score >= 80) return Colors.green;
-    if (score >= 50) return Colors.orange;
-    return Colors.red;
+  double _getCategoryAngle(ProblemCategory category) {
+    switch (category) {
+      case ProblemCategory.memory:
+        return 270;
+      case ProblemCategory.recall:
+        return 330;
+      case ProblemCategory.calculation:
+        return 30;
+      case ProblemCategory.language:
+        return 90;
+      case ProblemCategory.orientation:
+        return 150;
+    }
   }
 }

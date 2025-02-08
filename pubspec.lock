@@ -105,14 +105,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.1"
-  file_picker:
-    dependency: "direct main"
-    description:
-      name: file_picker
-      sha256: "1bbf65dd997458a08b531042ec3794112a6c39c07c37ff22113d2e7e4f81d4e4"
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.2.1"
   file_selector:
     dependency: "direct main"
     description:
@@ -261,14 +253,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_plugin_android_lifecycle:
-    dependency: transitive
-    description:
-      name: flutter_plugin_android_lifecycle
-      sha256: "615a505aef59b151b46bbeef55b36ce2b6ed299d160c51d84281946f0aa0ce0e"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.24"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -788,6 +772,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "28.1.41"
+  syncfusion_flutter_gauges:
+    dependency: "direct main"
+    description:
+      name: syncfusion_flutter_gauges
+      sha256: "93f4abd9ce0178879588508aaed1db023eb05cefb2e5ecb39764e7cc876be65d"
+      url: "https://pub.dev"
+    source: hosted
+    version: "28.1.41"
   term_glyph:
     dependency: transitive
     description:
@@ -844,14 +836,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.0"
-  win32:
-    dependency: transitive
-    description:
-      name: win32
-      sha256: "154360849a56b7b67331c21f09a386562d88903f90a1099c5987afc1912e1f29"
-      url: "https://pub.dev"
-    source: hosted
-    version: "5.10.0"
   xdg_directories:
     dependency: transitive
     description:

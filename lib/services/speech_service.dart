@@ -1,13 +1,10 @@
 import 'dart:convert';
 import 'dart:async';
-import 'dart:io' show Platform, Directory;
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:record/record.dart' as recorder;
 import 'package:flutter/foundation.dart';
 
 class AnswerEvaluation {
@@ -57,8 +54,6 @@ class SpeechService {
   final FlutterTts _flutterTts = FlutterTts();
   final stt.SpeechToText _speechToText = stt.SpeechToText();
   final GenerativeModel _generativeModel;
-  final recorder.Record _audioRecorder = recorder.Record();
-  List<String> _recognizedTextHistory = []; // 音声認識の履歴を保持
 
   SpeechService(String apiKey)
       : _generativeModel =

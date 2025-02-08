@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,8 +5,6 @@ import 'package:hexcolor/hexcolor.dart';
 import '../../components/my_button.dart';
 import '../../signup/controller/flow_controller.dart';
 import '../controller/sign_up_controller.dart';
-import 'package:file_picker/file_picker.dart';
-import '../../models/file_model.dart';
 import '../../components/my_textfield.dart';
 
 class SignUpThree extends StatefulWidget {
@@ -26,39 +22,6 @@ class _SignUpThreeState extends State<SignUpThree> {
   @override
   void initState() {
     super.initState();
-  }
-
-  String basename(String path) => basename(path);
-
-  Future uploadImageFile() async {
-    FilePickerResult? image = await FilePicker.platform.pickFiles(
-      allowMultiple: false,
-      withData: true,
-      type: FileType.custom,
-      allowedExtensions: ['jpg', 'png', 'jpeg'],
-    );
-
-    if (image != null) {
-      Uint8List? fileBytes = image.files.first.bytes;
-      String fileName = image.files.first.name;
-      signUpController
-          .setImageFile(FileModel(filename: fileName, fileBytes: fileBytes!));
-    }
-  }
-
-  Future uploadPdfFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      allowMultiple: false,
-      withData: true,
-      type: FileType.custom,
-      allowedExtensions: ['pdf'],
-    );
-    if (result != null) {
-      Uint8List? fileBytes = result.files.first.bytes;
-      String pdfName = result.files.first.name;
-      signUpController
-          .setResumeFile(FileModel(filename: pdfName, fileBytes: fileBytes!));
-    }
   }
 
   final admissionYearController = TextEditingController().obs;
@@ -161,9 +124,12 @@ class _SignUpThreeState extends State<SignUpThree> {
                     height: 5,
                   ),
                   MyButton(
-                    buttonText: 'Upload an image',
-                    onPressed: () async {
-                      uploadImageFile();
+                    buttonText: 'プロフィール画像をアップロード',
+                    onPressed: () {
+                      // 画像アップロード機能を無効化
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('現在、画像アップロード機能は利用できません。')),
+                      );
                     },
                   ),
                   const SizedBox(
@@ -173,7 +139,7 @@ class _SignUpThreeState extends State<SignUpThree> {
                     return Text(
                       signUpController.imageFile != null
                           ? signUpController.imageFile!.filename
-                          : "No file selected",
+                          : "ファイルが選択されていません",
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         color: HexColor("#8d8d8d"),
@@ -184,7 +150,7 @@ class _SignUpThreeState extends State<SignUpThree> {
                     height: 5,
                   ),
                   Text(
-                    "Resume (Optional)",
+                    "履歴書 (オプション)",
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       color: HexColor("#8d8d8d"),
@@ -194,9 +160,12 @@ class _SignUpThreeState extends State<SignUpThree> {
                     height: 5,
                   ),
                   MyButton(
-                    buttonText: 'Upload your resume',
+                    buttonText: '履歴書をアップロード',
                     onPressed: () {
-                      uploadPdfFile();
+                      // 履歴書アップロード機能を無効化
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('現在、履歴書アップロード機能は利用できません。')),
+                      );
                     },
                   ),
                   const SizedBox(
@@ -205,7 +174,7 @@ class _SignUpThreeState extends State<SignUpThree> {
                   GetBuilder<SignUpController>(builder: (context) {
                     return Text(
                       signUpController.resumeFile == null
-                          ? "No file selected"
+                          ? "ファイルが選択されていません"
                           : signUpController.resumeFile!.filename,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
@@ -219,7 +188,7 @@ class _SignUpThreeState extends State<SignUpThree> {
                   SizedBox(
                     width: double.infinity,
                     child: MyButton(
-                      buttonText: 'Submit',
+                      buttonText: '送信',
                       onPressed: () {
                         signUpController.postSignUpDetails();
                       },
