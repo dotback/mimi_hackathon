@@ -30,18 +30,59 @@ Mimi は、ユーザーの認知機能を評価し、改善するためのロー
 mimi/
 ├── android/           # Android固有の設定
 ├── ios/               # iOS固有の設定
+├── linux/             # Linux固有の設定
+├── macos/             # macOS固有の設定
+├── web/               # Web固有の設定
+├── windows/           # Windows固有の設定
 ├── lib/
+│   ├── components/    # 共通コンポーネント
+│   ├── config/        # 設定関連
+│   ├── controller/    # コントローラー
 │   ├── data/          # データレイヤー
 │   │   ├── models/    # データモデル定義
-│   │   └── repositories/ # データアクセスロジック
+│   ├── homepage/      # ホーム画面関連
 │   ├── logic/         # ビジネスロジック
 │   │   ├── services/  # アプリケーションサービス
-│   │   └── cubits/    # 状態管理
-│   └── presentation/  # UI関連
-│       ├── screens/   # 画面
-│       └── widgets/   # 共通ウィジェット
-└── test/              # テストコード
+│   ├── login/         # ログイン関連
+│   ├── models/        # 追加のモデル
+│   ├── screens/       # 画面
+│   ├── services/      # サービス
+│   ├── signup/        # サインアップ関連
+│   ├── utils/         # ユーティリティ
+│   ├── widgets/       # 共通ウィジェット
+│   ├── firebase_options.dart  # Firebase設定
+│   └── main.dart      # アプリケーションエントリーポイント
+├── test/              # テストコード
+├── assets/            # 静的アセット
+└── .env               # 環境変数
+
 ```
+
+### 主要なディレクトリと特性
+
+- **`lib/`**: アプリケーションのメインソースコードを含む
+
+  - `components/`: 再利用可能な UI コンポーネント
+  - `config/`: アプリケーション設定
+  - `controller/`: 状態管理とコントロールロジック
+  - `data/`: データモデルとリポジトリ
+  - `homepage/`: ホーム画面関連のコード
+  - `logic/`: ビジネスロジックとサービス
+  - `login/`: ログイン関連の機能
+  - `models/`: データモデル
+  - `screens/`: アプリの各画面
+  - `services/`: 外部サービスとの連携
+  - `signup/`: サインアップ関連の機能
+  - `utils/`: ユーティリティ関数
+  - `widgets/`: 共通ウィジェット
+
+- **`android/`, `ios/`, `linux/`, `macos/`, `web/`, `windows/`**: プラットフォーム固有の設定と実装
+
+- **`test/`**: アプリケーションのテストコード
+
+- **`assets/`**: 画像、フォント、その他の静的リソース
+
+- **`.env`**: 環境変数の設定
 
 ## 注意点
 
