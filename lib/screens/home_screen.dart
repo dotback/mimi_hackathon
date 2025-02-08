@@ -28,6 +28,43 @@ class _HomeScreenState extends State<HomeScreen> {
   late Future<User> _user;
   Map<String, dynamic>? _cognitiveTestResult;
 
+  /// モックデータ: ToDoリスト
+  // ignore: unused_field
+  final List<Map<String, dynamic>> _mockTodoList = [
+    {
+      'title': '朝のストレッチ',
+      'completed': false,
+      'icon': Icons.fitness_center,
+    },
+    {
+      'title': '脳トレアプリ',
+      'completed': true,
+      'icon': Icons.psychology,
+    },
+    {
+      'title': '散歩',
+      'completed': false,
+      'icon': Icons.directions_walk,
+    },
+  ];
+
+  /// モックデータ: 最近の活動
+  // ignore: unused_field
+  final List<Map<String, dynamic>> _mockRecentActivities = [
+    {
+      'title': '認知機能テスト',
+      'date': '2023-06-15',
+      'score': 8,
+      'icon': Icons.assessment,
+    },
+    {
+      'title': '言語学習',
+      'date': '2023-06-14',
+      'score': 7,
+      'icon': Icons.language,
+    },
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -186,86 +223,216 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('ホーム'),
+  /// ToDoリストアイテムのウィジェットを構築
+  Widget _buildTodoListItem(Map<String, dynamic> todo) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            UserAccountsDrawerHeader(
-              accountName: const Text('ユーザー名'),
-              accountEmail: const Text('user@example.com'),
-              currentAccountPicture: const CircleAvatar(
-                backgroundImage: NetworkImage('https://example.com/avatar.png'),
-              ),
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: NetworkImage('https://example.com/header_image.png'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            ..._buildDrawerItems(context),
-          ],
+      child: ListTile(
+        leading: Icon(
+          todo['icon'],
+          color: todo['completed'] ? Colors.green : Colors.grey,
         ),
-      ),
-      body: SafeArea(
-        child: FutureBuilder<User>(
-          future: _user,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('エラー: ${snapshot.error}'));
-            } else if (!snapshot.hasData) {
-              return const Center(child: Text('データがありません'));
-            }
-
-            User user = snapshot.data!;
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(context, user),
-                  const SizedBox(height: 24),
-                  _buildCognitiveTestResult(context),
-                  const SizedBox(height: 24),
-                  _buildToDoList(context),
-                  const SizedBox(height: 24),
-                  _buildDailyProblemButton(context),
-                  const SizedBox(height: 24),
-                  Center(
-                    child: _buildCognitiveTestButton(context),
-                  ),
-                ],
-              ),
-            );
+        title: Text(
+          todo['title'],
+          style: TextStyle(
+            decoration: todo['completed']
+                ? TextDecoration.lineThrough
+                : TextDecoration.none,
+            color: todo['completed'] ? Colors.grey : Colors.black,
+          ),
+        ),
+        trailing: Checkbox(
+          value: todo['completed'],
+          onChanged: (bool? value) {
+            // TODO: ToDoの完了状態を更新する処理
           },
         ),
       ),
     );
   }
 
-  /// ヘッダー部分を構築する
-  Widget _buildHeader(BuildContext context, User user) {
+  /// 最近の活動ウィジェットを構築
+  Widget _buildRecentActivities(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'こんにちは、${user.name}さん',
-          style: Theme.of(context).textTheme.headlineSmall,
+          '最近の活動',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          DateFormat('yyyy年M月d日 (E)', 'ja_JP').format(DateTime.now()),
-          style: Theme.of(context).textTheme.titleMedium,
+        const SizedBox(height: 12),
+        ...List.generate(
+          _mockRecentActivities.length,
+          (index) {
+            final activity = _mockRecentActivities[index];
+            return Container(
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.blue.shade50,
+                    Colors.blue.shade100,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ListTile(
+                leading: Icon(
+                  activity['icon'],
+                  color: Colors.blue.shade700,
+                ),
+                title: Text(
+                  activity['title'],
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  '${activity['date']} - スコア: ${activity['score']}/10',
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+              ),
+            );
+          },
         ),
       ],
+    );
+  }
+
+  /// ヘッダー部分を構築する（デザイン更新）
+  Widget _buildHeader(BuildContext context, User user) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.blue.shade300, Colors.blue.shade600],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.4),
+            spreadRadius: 2,
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'こんにちは、${user.name}さん',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    DateFormat('yyyy年M月d日 (E)', 'ja_JP').format(DateTime.now()),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Colors.white70,
+                        ),
+                  ),
+                ],
+              ),
+              // モックのプロフィール画像
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: Colors.white,
+                backgroundImage: const AssetImage('assets/images/user_icon.png')
+                    as ImageProvider,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ToDoリストを表示するウィジェットを構築（デザイン更新）
+  Widget _buildToDoList(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '今日のTo Doリスト',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            TextButton.icon(
+              onPressed: () {
+                // TODO: ToDo追加モーダルの実装
+                _showAddTodoDialog(context);
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('追加'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // モックのToDoリストを表示
+        ..._mockTodoList.map((todo) => _buildTodoListItem(todo)).toList(),
+      ],
+    );
+  }
+
+  /// ToDoを追加するダイアログ
+  void _showAddTodoDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('新しいToDoを追加'),
+          content: TextField(
+            decoration: InputDecoration(
+              hintText: 'ToDoを入力',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('キャンセル'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // TODO: ToDoの追加処理
+                Navigator.pop(context);
+              },
+              child: const Text('追加'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -299,47 +466,30 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// 今日のTo Doリストを表示するウィジェットを構築する
-  Widget _buildToDoList(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '今日のTo Doリスト',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            TextButton(
-              onPressed: () {
-                // TODO: ToDo追加処理の実装
-              },
-              child: const Text('追加'),
-            ),
-          ],
-        ),
-        // TODO: ToDoリストの実装
-        const Text('現在のToDoはありません'),
-      ],
-    );
-  }
-
   /// 今日の問題ボタンを構築する
   Widget _buildDailyProblemButton(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '今日の問題',
-          style: Theme.of(context).textTheme.titleLarge,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.green.shade100, Colors.green.shade200],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        const SizedBox(height: 8),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 48),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withOpacity(0.3),
+            spreadRadius: 1,
+            blurRadius: 6,
+            offset: const Offset(0, 3),
           ),
-          onPressed: () {
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
             // ナビゲーション時に遷移アニメーションを追加
             Get.offAll(
               () => DailyProblemScreen(),
@@ -347,27 +497,230 @@ class _HomeScreenState extends State<HomeScreen> {
               duration: const Duration(milliseconds: 300),
             );
           },
-          child: const Text('今日の問題を解く'),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '今日の問題',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: Colors.green.shade900,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '認知機能を鍛える毎日の課題に挑戦しましょう',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.green.shade800,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade600,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                    onPressed: () {
+                      Get.offAll(
+                        () => DailyProblemScreen(),
+                        transition: Transition.fadeIn,
+                        duration: const Duration(milliseconds: 300),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-      ],
+      ),
     );
   }
 
   /// 認知機能テストボタンを構築する
   Widget _buildCognitiveTestButton(BuildContext context) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        minimumSize: const Size(200, 48),
+    return Container(
+      width: 250,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.purple.shade100, Colors.purple.shade200],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.purple.withOpacity(0.3),
+            spreadRadius: 1,
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
-      onPressed: () async {
-        // ナビゲーション時に遷移アニメーションを追加
-        Get.offAll(
-          () => const CognitiveTestScreen(),
-          transition: Transition.fadeIn,
-          duration: const Duration(milliseconds: 300),
-        );
-      },
-      child: const Text('認知機能テストを受ける'),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () async {
+            // ナビゲーション時に遷移アニメーションを追加
+            Get.offAll(
+              () => const CognitiveTestScreen(),
+              transition: Transition.fadeIn,
+              duration: const Duration(milliseconds: 300),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '認知機能テスト',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: Colors.purple.shade900,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '現在の認知能力を評価しましょう',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.purple.shade800,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.purple.shade600,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.assessment_outlined,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                    onPressed: () {
+                      Get.offAll(
+                        () => const CognitiveTestScreen(),
+                        transition: Transition.fadeIn,
+                        duration: const Duration(milliseconds: 300),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey.shade100,
+      appBar: AppBar(
+        title: const Text('ホーム'),
+        backgroundColor: Colors.blue.shade600,
+        elevation: 0,
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            UserAccountsDrawerHeader(
+              accountName: const Text('ユーザー名'),
+              accountEmail: const Text('user@example.com'),
+              currentAccountPicture: CircleAvatar(
+                backgroundColor: Colors.white,
+                backgroundImage: const AssetImage('assets/images/user_icon.png')
+                    as ImageProvider,
+              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.blue.shade400, Colors.blue.shade700],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+            ),
+            ..._buildDrawerItems(context),
+          ],
+        ),
+      ),
+      body: SafeArea(
+        child: FutureBuilder<User>(
+          future: _user,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('エラー: ${snapshot.error}'));
+            } else if (!snapshot.hasData) {
+              return const Center(child: Text('データがありません'));
+            }
+
+            User user = snapshot.data!;
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(context, user),
+                  const SizedBox(height: 24),
+                  _buildCognitiveTestResult(context),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: _buildDailyProblemButton(context),
+                        ),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: _buildCognitiveTestButton(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildToDoList(context),
+                  const SizedBox(height: 24),
+                  _buildRecentActivities(context),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }
