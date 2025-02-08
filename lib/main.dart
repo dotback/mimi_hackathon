@@ -9,6 +9,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:flutter/foundation.dart' show PlatformDispatcher;
+import 'dart:io' show Platform;
 
 import 'firebase_options.dart';
 import 'services/auth_service.dart';
@@ -36,9 +37,8 @@ void main() async {
   // 環境変数の読み込み
   String geminiApiKey = '';
   try {
-    // Cloud Run環境変数を最優先で確認
-    geminiApiKey =
-        const String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
+    // Cloud Run環境変数を最優先で確認（Platform.environmentを使用）
+    geminiApiKey = Platform.environment['GEMINI_API_KEY'] ?? '';
 
     // Cloud Run環境変数が空の場合、.envファイルからフォールバック
     if (geminiApiKey.isEmpty) {
