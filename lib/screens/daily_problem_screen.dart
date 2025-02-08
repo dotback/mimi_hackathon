@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:intl/intl.dart';
 import '../data/models/problem_result.dart';
 import '../data/models/problem.dart';
@@ -280,43 +279,53 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
             'カテゴリ別パフォーマンス',
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 250,
-            child: SfRadialGauge(
-              axes: <RadialAxis>[
-                RadialAxis(
-                  minimum: 0,
-                  maximum: 1,
-                  ranges: <GaugeRange>[
-                    GaugeRange(
-                      startValue: 0,
-                      endValue: 1,
-                      color: Colors.grey.shade200,
-                      startWidth: 10,
-                      endWidth: 10,
-                    )
-                  ],
-                  pointers: _mockCategoryPerformance.entries.map((entry) {
-                    return RangePointer(
-                      value: entry.value,
-                      color: _getPerformanceColor(entry.value),
-                      width: 10,
-                    );
-                  }).toList(),
-                  annotations: _mockCategoryPerformance.entries.map((entry) {
-                    return GaugeAnnotation(
-                      angle: _getCategoryAngle(entry.key),
-                      positionFactor: 1.1,
-                      widget: Text(
+          const SizedBox(height: 16),
+          Column(
+            children: _mockCategoryPerformance.entries.map((entry) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Text(
                         _getCategoryName(entry.key),
-                        style: const TextStyle(fontSize: 12),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    );
-                  }).toList(),
-                )
-              ],
-            ),
+                    ),
+                    Expanded(
+                      flex: 3,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: LinearProgressIndicator(
+                          value: entry.value,
+                          backgroundColor: Colors.grey.shade300,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            _getPerformanceColor(entry.value),
+                          ),
+                          minHeight: 15,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: Text(
+                        '${(entry.value * 100).toStringAsFixed(0)}点',
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: _getPerformanceColor(entry.value),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -324,8 +333,20 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
   }
 
   Widget _buildProblemListSection(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade300,
+            spreadRadius: 1,
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -345,20 +366,83 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
                 return const Center(child: Text('データがありません'));
               }
 
-              return Column(
-                children: snapshot.data!
-                    .map(
-                      (problem) => Card(
-                        child: ListTile(
-                          title: Text(problem.title),
-                          subtitle: Text(problem.description),
-                          trailing:
-                              Text(_getDifficultyText(problem.difficulty)),
-                          onTap: () => _startProblem(problem),
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: snapshot.data!.length,
+                itemBuilder: (context, index) {
+                  final problem = snapshot.data![index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            _getDifficultyColor(problem.difficulty)
+                                .withOpacity(0.1),
+                            _getDifficultyColor(problem.difficulty)
+                                .withOpacity(0.3),
+                          ],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _getDifficultyColor(problem.difficulty),
+                          width: 1.5,
                         ),
                       ),
-                    )
-                    .toList(),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: _getDifficultyColor(problem.difficulty),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            _getCategoryIcon(problem.category),
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        title: Text(
+                          problem.title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        subtitle: Text(
+                          problem.description,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        trailing: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: _getDifficultyColor(problem.difficulty)
+                                .withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            _getDifficultyText(problem.difficulty),
+                            style: TextStyle(
+                              color: _getDifficultyColor(problem.difficulty),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        onTap: () => _startProblem(problem),
+                      ),
+                    ),
+                  );
+                },
               );
             },
           ),
@@ -432,18 +516,31 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
     return Colors.red;
   }
 
-  double _getCategoryAngle(ProblemCategory category) {
+  Color _getDifficultyColor(int difficulty) {
+    switch (difficulty) {
+      case 1:
+        return Colors.green;
+      case 2:
+        return Colors.orange;
+      case 3:
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _getCategoryIcon(ProblemCategory category) {
     switch (category) {
       case ProblemCategory.memory:
-        return 270;
+        return Icons.memory;
       case ProblemCategory.recall:
-        return 330;
+        return Icons.replay;
       case ProblemCategory.calculation:
-        return 30;
+        return Icons.calculate;
       case ProblemCategory.language:
-        return 90;
+        return Icons.language;
       case ProblemCategory.orientation:
-        return 150;
+        return Icons.navigation;
     }
   }
 }

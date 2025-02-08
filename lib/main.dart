@@ -35,26 +35,31 @@ void main() async {
 
   // 環境変数の読み込み
   String geminiApiKey = '';
-  try {
-    // ローカル環境用の.env読み込み
+
+  // Cloud Run環境かどうかを判定
+  const isCloudRun = bool.fromEnvironment('CLOUD_RUN', defaultValue: false);
+
+  if (isCloudRun) {
+    try {
+      // Cloud Run環境の環境変数を取得
+      final cloudRunApiKey = const String.fromEnvironment('GEMINI_API_KEY');
+
+      if (cloudRunApiKey.isNotEmpty) {
+        geminiApiKey = cloudRunApiKey;
+        Get.put<String>(geminiApiKey, tag: 'geminiApiKey');
+      }
+
+      if (geminiApiKey.isEmpty) {
+        print('警告: Cloud Run環境でGemini APIキーが見つかりませんでした');
+      }
+    } catch (e) {
+      print('Cloud Run環境変数読み込みエラー: $e');
+    }
+  } else {
+    // ローカル環境用の通常の.env読み込み
     await dotenv.load(fileName: '.env');
     geminiApiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
-
-    // Cloud Run環境の環境変数を優先
-    final cloudRunApiKey = const String.fromEnvironment('GEMINI_API_KEY');
-
-    if (cloudRunApiKey.isNotEmpty) {
-      geminiApiKey = cloudRunApiKey;
-    }
-
     Get.put<String>(geminiApiKey, tag: 'geminiApiKey');
-
-    // それでも空の場合はエラーログ
-    if (geminiApiKey.isEmpty) {
-      print('警告: Gemini APIキーが見つかりませんでした');
-    }
-  } catch (e) {
-    print('環境変数読み込みエラー: $e');
   }
 
   // SharedPreferencesを初期化
