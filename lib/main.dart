@@ -9,7 +9,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:flutter/foundation.dart' show PlatformDispatcher;
-import 'dart:io' show Platform;
 
 import 'firebase_options.dart';
 import 'services/auth_service.dart';
@@ -37,13 +36,15 @@ void main() async {
   // 環境変数の読み込み
   String geminiApiKey = '';
   try {
-    // Cloud Run環境変数を最優先で確認（Platform.environmentを使用）
-    geminiApiKey = Platform.environment['GEMINI_API_KEY'] ?? '';
+    // ローカル環境用の.env読み込み
+    await dotenv.load(fileName: '.env');
+    geminiApiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
 
-    // Cloud Run環境変数が空の場合、.envファイルからフォールバック
-    if (geminiApiKey.isEmpty) {
-      await dotenv.load(fileName: '.env');
-      geminiApiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+    // Cloud Run環境の環境変数を優先
+    final cloudRunApiKey = const String.fromEnvironment('GEMINI_API_KEY');
+
+    if (cloudRunApiKey.isNotEmpty) {
+      geminiApiKey = cloudRunApiKey;
     }
 
     Get.put<String>(geminiApiKey, tag: 'geminiApiKey');
@@ -51,8 +52,6 @@ void main() async {
     // それでも空の場合はエラーログ
     if (geminiApiKey.isEmpty) {
       print('警告: Gemini APIキーが見つかりませんでした');
-    } else {
-      print('Gemini APIキー: ${geminiApiKey.substring(0, 10)}...(部分表示)');
     }
   } catch (e) {
     print('環境変数読み込みエラー: $e');
