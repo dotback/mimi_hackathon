@@ -160,7 +160,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
     {
       'question': '知っている野菜の名前をできるだけ多く言ってください。',
       'type': 'vegetable_list',
-      'timeLimit': 60,
+      'timeLimit': 30,
       'options': null,
     },
   ];
@@ -194,7 +194,15 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
     );
     _timerAnimation =
         Tween<double>(begin: 1.0, end: 0.0).animate(_timerAnimationController);
-    _startQuestionTimer();
+
+    // テスト開始前に説明ダイアログを表示
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showTestInstructionsDialog();
+    });
+
+    // initStateでは一時的にタイマーを停止
+    _timerAnimationController.stop();
+    _questionTimer?.cancel();
   }
 
   @override
@@ -206,6 +214,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
   }
 
   void _startQuestionTimer() {
+    // タイマーを初期化して開始
     _remainingTime = _questions[_currentQuestionIndex]['timeLimit'];
     _timerAnimationController.reset();
     _timerAnimationController.forward();
@@ -430,13 +439,13 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
   }
 
   String _getResultInterpretation() {
-    if (_score >= 21) {
+    if (_score >= 8) {
       return '認知機能は正常範囲内です。';
-    } else if (_score >= 16) {
+    } else if (_score >= 6) {
       return '軽度の認知機能低下が疑われます。\n医療専門家に相談することをお勧めします。';
-    } else if (_score >= 11) {
+    } else if (_score >= 4) {
       return '中等度の認知機能低下が疑われます。\n早めに医療専門家に相談してください。';
-    } else if (_score >= 5) {
+    } else if (_score >= 2) {
       return '高度の認知機能低下が疑われます。\n至急、医療専門家に相談してください。';
     } else {
       return '非常に高度の認知機能低下が疑われます。\n直ちに医療専門家に相談してください。';
@@ -448,8 +457,8 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
     switch (question['type']) {
       case 'image_memory':
         return _ImageMemoryTestWidget(
-          images: question['images'],
-          multipleChoiceQuestions: question['multipleChoiceQuestions'],
+          images: question['images'] ?? [],
+          multipleChoiceQuestions: question['multipleChoiceQuestions'] ?? [],
           onSubmit: _nextQuestion,
           onSelectionScreenReady: () {
             // タイマーを自動開始
@@ -477,13 +486,13 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
       case 'number_recall':
         return _MemoryTestWidget(
           memorizedWords: question['type'] == 'memory_stage1'
-              ? question['memorizedWords']
+              ? (question['memorizedWords'] ?? [])
               : (question['type'] == 'reverse_number_memory'
-                  ? question['memorizedNumbers']
+                  ? (question['memorizedWords'] ?? [])
                   : []),
-          multipleChoiceQuestions: question['multipleChoiceQuestions'],
+          multipleChoiceQuestions: question['multipleChoiceQuestions'] ?? [],
           onSubmit: _nextQuestion,
-          initialStage: question['type'] == 'number_recall' ? 2 : 0,
+          initialStage: _currentQuestionIndex == 6 ? 2 : 0,
           onSelectionScreenReady: () {
             // number_recallの場合はタイマーを自動開始
             _remainingTime = question['timeLimit'];
@@ -513,25 +522,69 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-            ...question['options']
-                .map<Widget>((option) => ElevatedButton(
-                      onPressed: () => _nextQuestion(option),
-                      child: Text(option),
-                    ))
-                .toList(),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: question['options']
+                  .map<Widget>((option) => ElevatedButton(
+                        onPressed: () => _nextQuestion(option),
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.blue[600],
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 3,
+                        ),
+                        child: Text(
+                          option,
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ))
+                  .toList(),
+            ),
           ],
         );
 
       case 'location_description':
-        return TextField(
-          controller: _textController,
-          decoration: const InputDecoration(
-            hintText: '今いる場所を具体的に教えてください',
-            border: OutlineInputBorder(),
-          ),
-          onSubmitted: _nextQuestion,
-          maxLines: null,
-          keyboardType: TextInputType.multiline,
+        return Column(
+          children: [
+            TextField(
+              controller: _textController,
+              decoration: const InputDecoration(
+                hintText: '今いる場所を具体的に教えてください',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: null,
+              keyboardType: TextInputType.multiline,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                if (_textController.text.trim().isNotEmpty) {
+                  _nextQuestion(_textController.text);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.blue[600],
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 3,
+              ),
+              child: const Text(
+                '回答を送信する',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
         );
 
       case 'detailed_date':
@@ -541,14 +594,39 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
         );
 
       case 'age':
-        return TextField(
-          controller: _textController,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            hintText: 'あなたの年齢を入力してください（半角数字）',
-            border: OutlineInputBorder(),
-          ),
-          onSubmitted: _nextQuestion,
+        return Column(
+          children: [
+            TextField(
+              controller: _textController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                hintText: 'あなたの年齢を入力してください（半角数字）',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                if (_textController.text.trim().isNotEmpty) {
+                  _nextQuestion(_textController.text);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.blue[600],
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 3,
+              ),
+              child: const Text(
+                '回答を送信する',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
         );
 
       case 'date':
@@ -567,17 +645,49 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
       case 'recall':
         return Column(
           children: [
-            ...question['options']
-                .map<Widget>((option) => ElevatedButton(
-                      onPressed: () => _nextQuestion(option),
-                      child: Text(option),
-                    ))
-                .toList(),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () => _nextQuestion('わからない'),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.grey),
-              child: const Text('わからない'),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: [
+                ...question['options']
+                    .map<Widget>((option) => ElevatedButton(
+                          onPressed: () => _nextQuestion(option),
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            backgroundColor: Colors.blue[600],
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 3,
+                          ),
+                          child: Text(
+                            option,
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ))
+                    .toList(),
+                ElevatedButton(
+                  onPressed: () => _nextQuestion('わからない'),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.grey[600],
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    elevation: 3,
+                  ),
+                  child: const Text(
+                    'わからない',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
             ),
           ],
         );
@@ -607,16 +717,46 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
       case 'birthday':
       case 'time':
       case 'vegetable_list':
+        return _VegetableListWidget(
+          onSubmit: _nextQuestion,
+          timeLimit: _questions[_currentQuestionIndex]['timeLimit'],
+        );
+
       default:
-        return TextField(
-          controller: _textController,
-          decoration: InputDecoration(
-            hintText: question['type'] == 'birthday'
-                ? '例: 1980年1月1日'
-                : '例: ${DateFormat('HH:mm').format(DateTime.now())}',
-            border: const OutlineInputBorder(),
-          ),
-          onSubmitted: _nextQuestion,
+        return Column(
+          children: [
+            TextField(
+              controller: _textController,
+              decoration: InputDecoration(
+                hintText: question['type'] == 'birthday'
+                    ? '例: 1980年1月1日'
+                    : '例: ${DateFormat('HH:mm').format(DateTime.now())}',
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                if (_textController.text.trim().isNotEmpty) {
+                  _nextQuestion(_textController.text);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.blue[600],
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 3,
+              ),
+              child: const Text(
+                '回答を送信する',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
         );
     }
   }
@@ -675,11 +815,113 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
     }
   }
 
+  // テスト説明用のダイアログを表示するメソッド
+  void _showTestInstructionsDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            '認知機能テストについて',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.blue,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: [
+                const Text(
+                  'このテストは、認知機能の現状を評価するためのものです。以下の点に注意してください：',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                _buildInstructionPoint(
+                  '目的',
+                  '記憶力、注意力、計算能力などの認知機能を総合的に評価します。',
+                ),
+                _buildInstructionPoint(
+                  '所要時間',
+                  '全${_questions.length}問で、各問題の制限時間は30秒です。',
+                ),
+                _buildInstructionPoint(
+                  '注意事項',
+                  '落ち着いて、できる範囲で回答してください。分からない場合は「わからない」を選択できます。',
+                ),
+                _buildInstructionPoint(
+                  '結果の解釈',
+                  '結果は参考情報です。医療専門家に相談することをお勧めします。',
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  '準備ができましたら、「テストを開始」ボタンを押してください。',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                // モーダルを閉じた後にタイマーを再開
+                _startQuestionTimer();
+              },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.blue[600],
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 3,
+              ),
+              child: const Text(
+                'テストを開始',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // 説明ポイントを構築するヘルパーメソッド
+  Widget _buildInstructionPoint(String title, String description) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(color: Colors.black87),
+          children: [
+            TextSpan(
+              text: '$title: ',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+            TextSpan(text: description),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('認知機能テスト'),
+        title: const Text(
+          '認知機能テスト',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Get.back(),
@@ -687,12 +929,27 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
         actions: [
           TextButton(
             onPressed: () => _nextQuestion(null, skipped: true),
-            child: const Text('スキップ'),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.grey[600],
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'スキップ',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
           ),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -700,34 +957,61 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
             AnimatedBuilder(
               animation: _timerAnimation,
               builder: (context, child) {
-                return LinearProgressIndicator(
-                  value: _timerAnimation.value,
-                  backgroundColor: Colors.grey[300],
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    _remainingTime <= 10 ? Colors.red : Colors.blue,
+                return Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.3),
+                        spreadRadius: 1,
+                        blurRadius: 3,
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
+                      value: _timerAnimation.value,
+                      backgroundColor: Colors.grey[300],
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        _remainingTime <= 10 ? Colors.red : Colors.blue,
+                      ),
+                      minHeight: 10,
+                    ),
                   ),
                 );
               },
             ),
-            const SizedBox(height: 10),
-            Text(
-              '${_currentQuestionIndex + 1}問目 / 全${_questions.length}問',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              '残り時間: $_remainingTime 秒',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              _questions[_currentQuestionIndex]['question'],
-              style: Theme.of(context).textTheme.headlineSmall,
-              textAlign: TextAlign.center,
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${_currentQuestionIndex + 1}問目 / 全${_questions.length}問',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[700],
+                      ),
+                ),
+                Text(
+                  '残り時間: $_remainingTime 秒',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: _remainingTime <= 10 ? Colors.red : Colors.black,
+                      ),
+                ),
+              ],
             ),
             const SizedBox(height: 20),
+            Text(
+              _questions[_currentQuestionIndex]['question'],
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue[800],
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 30),
             _buildQuestionInput(),
           ],
         ),
@@ -758,79 +1042,118 @@ class _DetailedDateInputState extends State<_DetailedDateInput> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // 年のドロップダウン
-        DropdownButton<String>(
-          hint: const Text('年を選択'),
-          value: selectedYear,
-          items: widget.options['years']
-                  ?.map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList() ??
-              [],
-          onChanged: (String? newValue) {
-            setState(() {
-              selectedYear = newValue;
-            });
-          },
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          alignment: WrapAlignment.center,
+          children: [
+            // 年のドロップダウン
+            Container(
+              width: 100,
+              child: DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: '年',
+                  border: OutlineInputBorder(),
+                ),
+                hint: const Text('年'),
+                value: selectedYear,
+                items: widget.options['years']
+                        ?.map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList() ??
+                    [],
+                onChanged: (String? newValue) {
+                  setState(() {
+                    selectedYear = newValue;
+                  });
+                },
+              ),
+            ),
+
+            // 月のドロップダウン
+            Container(
+              width: 80,
+              child: DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: '月',
+                  border: OutlineInputBorder(),
+                ),
+                hint: const Text('月'),
+                value: selectedMonth,
+                items: widget.options['months']
+                        ?.map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList() ??
+                    [],
+                onChanged: (String? newValue) {
+                  setState(() {
+                    selectedMonth = newValue;
+                  });
+                },
+              ),
+            ),
+
+            // 日のドロップダウン
+            Container(
+              width: 80,
+              child: DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: '日',
+                  border: OutlineInputBorder(),
+                ),
+                hint: const Text('日'),
+                value: selectedDay,
+                items: widget.options['days']
+                        ?.map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList() ??
+                    [],
+                onChanged: (String? newValue) {
+                  setState(() {
+                    selectedDay = newValue;
+                  });
+                },
+              ),
+            ),
+          ],
         ),
 
-        // 月のドロップダウン
-        DropdownButton<String>(
-          hint: const Text('月を選択'),
-          value: selectedMonth,
-          items: widget.options['months']
-                  ?.map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList() ??
-              [],
-          onChanged: (String? newValue) {
-            setState(() {
-              selectedMonth = newValue;
-            });
-          },
-        ),
-
-        // 日のドロップダウン
-        DropdownButton<String>(
-          hint: const Text('日を選択'),
-          value: selectedDay,
-          items: widget.options['days']
-                  ?.map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList() ??
-              [],
-          onChanged: (String? newValue) {
-            setState(() {
-              selectedDay = newValue;
-            });
-          },
-        ),
+        const SizedBox(height: 20),
 
         // 曜日のラジオボタン
-        Column(
+        Text(
+          '曜日を選択してください',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          alignment: WrapAlignment.center,
           children: widget.options['weekdays']?.map<Widget>((String weekday) {
-                return RadioListTile<String>(
-                  title: Text(weekday),
-                  value: weekday,
-                  groupValue: selectedWeekday,
-                  onChanged: (String? newValue) {
+                return ChoiceChip(
+                  label: Text(weekday),
+                  selected: selectedWeekday == weekday,
+                  onSelected: (bool selected) {
                     setState(() {
-                      selectedWeekday = newValue;
+                      selectedWeekday = selected ? weekday : null;
                     });
                   },
+                  selectedColor: Colors.blue[200],
                 );
               }).toList() ??
               [],
         ),
+
+        const SizedBox(height: 20),
 
         // 送信ボタン
         ElevatedButton(
@@ -845,7 +1168,19 @@ class _DetailedDateInputState extends State<_DetailedDateInput> {
                   widget.onSubmit(answer);
                 }
               : null,
-          child: const Text('回答する'),
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.white,
+            backgroundColor: Colors.blue[600],
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            elevation: 3,
+          ),
+          child: const Text(
+            '回答を送信する',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
         ),
       ],
     );
@@ -947,10 +1282,6 @@ class _MemoryTestWidgetState extends State<_MemoryTestWidget> {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            '今から出てくる単語を覚えてください',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
           Text(
             '$_countdownSeconds',
             style: const TextStyle(fontSize: 72, fontWeight: FontWeight.bold),
@@ -1115,10 +1446,6 @@ class _ImageMemoryTestWidgetState extends State<_ImageMemoryTestWidget> {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            '今から出てくる画像を覚えてください',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
           Text(
             '$_countdownSeconds',
             style: const TextStyle(fontSize: 72, fontWeight: FontWeight.bold),
@@ -1193,10 +1520,12 @@ class _ImageMemoryTestWidgetState extends State<_ImageMemoryTestWidget> {
 
 class _VegetableListWidget extends StatefulWidget {
   final Function(String?) onSubmit;
+  final int? timeLimit;
 
   const _VegetableListWidget({
     Key? key,
     required this.onSubmit,
+    this.timeLimit,
   }) : super(key: key);
 
   @override
@@ -1207,6 +1536,39 @@ class _VegetableListWidgetState extends State<_VegetableListWidget> {
   final TextEditingController _textController = TextEditingController();
   final List<String> _vegetables = [];
   final Set<String> _uniqueVegetables = {};
+  int _remainingTime = 0;
+  Timer? _questionTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // タイマーがある場合のみ開始
+    if (widget.timeLimit != null) {
+      _remainingTime = widget.timeLimit!;
+      _startTimer();
+    }
+  }
+
+  @override
+  void dispose() {
+    _questionTimer?.cancel();
+    _textController.dispose();
+    super.dispose();
+  }
+
+  void _startTimer() {
+    _questionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _remainingTime--;
+      });
+
+      if (_remainingTime <= 0) {
+        timer.cancel();
+        // 制限時間が過ぎたら自動的に回答を送信
+        widget.onSubmit(_vegetables.join(','));
+      }
+    });
+  }
 
   void _addVegetable(String vegetable) {
     if (vegetable.trim().isNotEmpty && !_uniqueVegetables.contains(vegetable)) {
@@ -1221,18 +1583,58 @@ class _VegetableListWidgetState extends State<_VegetableListWidget> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        TextField(
-          controller: _textController,
-          decoration: const InputDecoration(
-            hintText: '野菜の名前を入力してください',
-            border: OutlineInputBorder(),
+        // タイマーがある場合のみ表示
+        if (widget.timeLimit != null)
+          Text(
+            '残り時間: $_remainingTime 秒',
+            style: TextStyle(
+              color: _remainingTime <= 10 ? Colors.red : Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          onSubmitted: _addVegetable,
+        const SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _textController,
+                  decoration: const InputDecoration(
+                    hintText: '野菜の名前を入力してください',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: () {
+                  if (_textController.text.trim().isNotEmpty) {
+                    _addVegetable(_textController.text);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.blue[600],
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 3,
+                ),
+                child: const Text('追加'),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 10),
-        Expanded(
-          child: ListView.builder(
+        if (_vegetables.isNotEmpty)
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
             itemCount: _vegetables.length,
             itemBuilder: (context, index) {
               return ListTile(
@@ -1244,23 +1646,32 @@ class _VegetableListWidgetState extends State<_VegetableListWidget> {
               );
             },
           ),
-        ),
-        ElevatedButton(
-          onPressed: _vegetables.isNotEmpty
-              ? () {
-                  // 入力された野菜のリストをカンマ区切りで送信
-                  widget.onSubmit(_vegetables.join(','));
-                }
-              : null,
-          child: const Text('回答終了'),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ElevatedButton(
+            onPressed: _vegetables.isNotEmpty
+                ? () {
+                    // 入力された野菜のリストをカンマ区切りで送信
+                    _questionTimer?.cancel();
+                    widget.onSubmit(_vegetables.join(','));
+                  }
+                : null,
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.blue[600],
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 3,
+            ),
+            child: const Text(
+              '回答終了',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
         ),
       ],
     );
-  }
-
-  @override
-  void dispose() {
-    _textController.dispose();
-    super.dispose();
   }
 }
