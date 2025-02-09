@@ -14,6 +14,8 @@ import 'daily_problem_screen.dart';
 import 'user_profile_screen.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
+import '../services/gemini_service.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,6 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
   late Future<local_user.User> _user;
   Map<String, dynamic>? _cognitiveTestResult;
   String _userEmail = 'ゲストユーザー';
+  late final GeminiService _geminiService;
+  bool _isGeneratingTest = false;
 
   /// モックデータ: ToDoリスト
   // ignore: unused_field
@@ -75,6 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _apiService = ApiService();
     _cognitiveTestService = ApiCognitiveTestService();
     _sharedPreferencesService = SharedPreferencesService();
+    _geminiService = GeminiService();
 
     // デフォルトのユーザーを初期化
     _user = Future.value(local_user.User(
@@ -115,17 +120,37 @@ class _HomeScreenState extends State<HomeScreen> {
       final currentUser = firebase_auth.FirebaseAuth.instance.currentUser;
       final userId = currentUser?.uid ?? 'dummy_user_id';
 
-      // ユーザープロファイルを取得
-      final fetchedUser = await _apiService.fetchUserProfile(userId);
+      print('フェッチするユーザーID: $userId'); // デバッグログ
 
-      setState(() {
-        _user = Future.value(fetchedUser);
-      });
+      // ユーザープロファイルを取得
+      try {
+        final fetchedUser = await _apiService.fetchUserProfile(userId);
+
+        setState(() {
+          _user = Future.value(fetchedUser);
+        });
+      } catch (fetchError) {
+        print('ユーザープロファイルのフェッチ中のエラー: $fetchError');
+
+        // デフォルトユーザーを設定
+        setState(() {
+          _user = Future.value(local_user.User(
+            name: 'ゲストユーザー',
+            gender: 'unknown',
+            age: 0,
+            exerciseHabit: 'none',
+            sleepHours: 0.0,
+            email: _userEmail,
+            birthday: DateTime(1960, 1, 1),
+          ));
+        });
+      }
 
       // 認知機能テスト結果を取得
       await _fetchCognitiveTestResult();
     } catch (e) {
-      print('データ初期化中のエラー: $e');
+      print('データ初期化中の包括的エラー: $e');
+
       // エラー時のフォールバック
       setState(() {
         _user = Future.value(local_user.User(
@@ -134,18 +159,11 @@ class _HomeScreenState extends State<HomeScreen> {
           age: 0,
           exerciseHabit: 'none',
           sleepHours: 0.0,
-          email: '',
+          email: _userEmail,
           birthday: DateTime(1960, 1, 1),
         ));
       });
     }
-  }
-
-  /// ユーザープロファイルを取得する
-  void _fetchUserProfile() {
-    setState(() {
-      _user = _apiService.fetchUserProfile('dummy_user_id');
-    });
   }
 
   /// 認知機能テスト結果をローカルストレージから取得する
@@ -225,20 +243,14 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
 
     // ログイン画面に遷移する前に、画面を更新する
-    Get.offAll(
-      () => const LoginScreen(),
-      transition: Transition.fadeIn,
-      duration: const Duration(milliseconds: 300),
-      predicate: (route) => false,
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => const LoginScreen(),
+        settings: RouteSettings(
+          arguments: null,
+        ),
+      ),
     );
-  }
-
-  /// 認知機能テスト結果の色を取得する
-  Color _getTestResultColor(int? score) {
-    if (score == null) return Colors.grey;
-    if (score >= 8) return Colors.green;
-    if (score >= 5) return Colors.orange;
-    return Colors.red;
   }
 
   /// ドロワーメニューのアイテムを生成する
@@ -254,7 +266,14 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('マイプロフィール'),
         onTap: () {
           Get.back();
-          Get.to(() => const UserProfileScreen());
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const UserProfileScreen(),
+              settings: RouteSettings(
+                arguments: null,
+              ),
+            ),
+          );
         },
       ),
       ListTile(
@@ -491,31 +510,58 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 認知機能テスト結果を表示するウィジェットを構築する
   Widget _buildCognitiveTestResult(BuildContext context) {
-    if (_cognitiveTestResult == null) {
-      return const SizedBox.shrink();
-    }
+    return FutureBuilder<local_user.User>(
+      future: _user,
+      builder: (context, userSnapshot) {
+        if (!userSnapshot.hasData || _cognitiveTestResult == null) {
+          return const SizedBox.shrink();
+        }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '最新の認知機能テスト結果',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'スコア: ${_cognitiveTestResult!['score']} / 10',
-          style: TextStyle(
-            fontSize: 16,
-            color: _getTestResultColor(_cognitiveTestResult!['score']),
+        return Card(
+          margin: const EdgeInsets.all(8),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '認知機能テスト結果',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    if (_isGeneratingTest)
+                      const SpinKitWave(
+                        color: Colors.blue,
+                        size: 30.0,
+                      )
+                    else
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.auto_awesome),
+                        label: const Text('AI問題生成'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: _generatePersonalizedTest,
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'スコア: ${_cognitiveTestResult?['score'] ?? 'N/A'} / 10',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                Text(
+                  'コメント: ${_cognitiveTestResult?['comment'] ?? ''}',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          _cognitiveTestResult!['comment'],
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -544,10 +590,13 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(16),
           onTap: () {
             // ナビゲーション時に遷移アニメーションを追加
-            Get.to(
-              () => DailyProblemScreen(),
-              transition: Transition.fadeIn,
-              duration: const Duration(milliseconds: 300),
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => DailyProblemScreen(),
+                settings: RouteSettings(
+                  arguments: null,
+                ),
+              ),
             );
           },
           child: Padding(
@@ -589,10 +638,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       size: 32,
                     ),
                     onPressed: () {
-                      Get.offAll(
-                        () => DailyProblemScreen(),
-                        transition: Transition.fadeIn,
-                        duration: const Duration(milliseconds: 300),
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => DailyProblemScreen(),
+                          settings: RouteSettings(
+                            arguments: null,
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -631,10 +683,13 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(16),
           onTap: () async {
             // ナビゲーション時に遷移アニメーションを追加
-            Get.to(
-              () => const CognitiveTestScreen(),
-              transition: Transition.fadeIn,
-              duration: const Duration(milliseconds: 300),
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => const CognitiveTestScreen(),
+                settings: RouteSettings(
+                  arguments: null,
+                ),
+              ),
             );
           },
           child: Padding(
@@ -676,10 +731,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       size: 32,
                     ),
                     onPressed: () {
-                      Get.offAll(
-                        () => const CognitiveTestScreen(),
-                        transition: Transition.fadeIn,
-                        duration: const Duration(milliseconds: 300),
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => const CognitiveTestScreen(),
+                          settings: RouteSettings(
+                            arguments: null,
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -726,6 +784,115 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _userEmail = email;
     });
+  }
+
+  /// Geminiでテストを生成するメソッドを追加
+  Future<void> _generatePersonalizedTest() async {
+    if (_cognitiveTestResult == null) {
+      _showErrorSnackBar('先に認知機能テストを受けてください');
+      return;
+    }
+
+    // オーバーレイを表示
+    final overlayEntry = _showLoadingOverlay(context);
+
+    try {
+      // ユーザーデータを取得
+      local_user.User user = await _user;
+
+      final generatedTest = await _geminiService.generatePersonalizedTest(
+          _cognitiveTestResult!, user);
+
+      // オーバーレイを削除
+      overlayEntry.remove();
+
+      // 成功メッセージを表示
+      _showSuccessDialog(context, 'AIがパーソナライズされた問題を生成しました！');
+
+      // 生成されたテストを使用して今日の課題画面に遷移
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DailyProblemScreen(
+            personalizedTest: generatedTest,
+          ),
+        ),
+      );
+    } catch (e) {
+      // オーバーレイを削除
+      overlayEntry.remove();
+
+      _showErrorSnackBar('テスト生成中にエラーが発生しました: $e');
+    }
+  }
+
+  /// ローディングオーバーレイを表示
+  OverlayEntry _showLoadingOverlay(BuildContext context) {
+    final overlayEntry = OverlayEntry(
+      builder: (context) => Positioned.fill(
+        child: Container(
+          color: Colors.black54,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SpinKitCubeGrid(
+                  color: Colors.white,
+                  size: 80.0,
+                ),
+                SizedBox(height: 20),
+                Text(
+                  'Gemini AIが問題を生成しています...',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(overlayEntry);
+    return overlayEntry;
+  }
+
+  /// 成功ダイアログを表示
+  void _showSuccessDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('問題生成完了'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.check_circle,
+              color: Colors.green,
+              size: 80,
+            ),
+            SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

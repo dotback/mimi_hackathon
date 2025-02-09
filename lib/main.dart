@@ -15,6 +15,7 @@ import 'env.dart'; // env.dart をインポート
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initServices();
 
   // 詳細なエラーロギングを追加
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -35,14 +36,6 @@ void main() async {
 
   Get.put<String>(Env.geminiApiKey, tag: 'geminiApiKey');
 
-  // SharedPreferencesを初期化
-  try {
-    await SharedPreferences.getInstance();
-    print('SharedPreferences初期化成功');
-  } catch (e) {
-    print('SharedPreferences初期化エラー: $e');
-  }
-
   // AuthServiceをGetに登録
   Get.lazyPut(() => AuthService());
 
@@ -54,6 +47,11 @@ void main() async {
   };
 
   runApp(const MyApp());
+}
+
+Future<void> initServices() async {
+  await Get.putAsync(() async => SharedPreferences.getInstance());
+  // 他の必要な初期化処理
 }
 
 class MyApp extends StatelessWidget {

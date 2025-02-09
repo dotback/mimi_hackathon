@@ -10,7 +10,12 @@ import 'image_recognition_problem_screen.dart';
 import 'package:get/get.dart';
 
 class DailyProblemScreen extends StatefulWidget {
-  const DailyProblemScreen({super.key});
+  final Map<String, dynamic>? personalizedTest;
+
+  const DailyProblemScreen({
+    super.key,
+    this.personalizedTest,
+  });
 
   @override
   State<DailyProblemScreen> createState() => _DailyProblemScreenState();
@@ -81,8 +86,102 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
   @override
   void initState() {
     super.initState();
-    _dailyProblems = _problemService.generateDailyProblems();
+
+    // パーソナライズされたテストがある場合はそれを使用
+    if (widget.personalizedTest != null &&
+        widget.personalizedTest!['dailyProblems'] != null) {
+      final dailyProblems = widget.personalizedTest!['dailyProblems'] as List;
+
+      // 問題の種類ごとに1つを選択
+      final selectedProblems = <Problem>[];
+
+      // 通常問題を1つ選択
+      final normalProblems =
+          dailyProblems.where((problem) => problem['type'] == '通常問題').toList();
+      if (normalProblems.isNotEmpty) {
+        final selectedNormalProblem = normalProblems[0];
+        selectedProblems.add(Problem(
+          id: selectedNormalProblem['id'] ?? '',
+          title: selectedNormalProblem['question'] ?? '',
+          description: selectedNormalProblem['type'] ?? '',
+          category: _mapStringToProblemCategory(
+              selectedNormalProblem['category'] ?? ''),
+          difficulty: 2, // デフォルトの難易度
+        ));
+      }
+
+      // 音声問題を1つ選択
+      final voiceProblems =
+          dailyProblems.where((problem) => problem['type'] == '音声問題').toList();
+      if (voiceProblems.isNotEmpty) {
+        final selectedVoiceProblem = voiceProblems[0];
+        selectedProblems.add(Problem(
+          id: selectedVoiceProblem['id'] ?? '',
+          title: selectedVoiceProblem['question'] ?? '',
+          description: selectedVoiceProblem['type'] ?? '',
+          category: _mapStringToProblemCategory(
+              selectedVoiceProblem['category'] ?? ''),
+          difficulty: 2, // デフォルトの難易度
+        ));
+      }
+
+      // 画像問題を固定で追加
+      selectedProblems.add(Problem(
+        id: 'image_problem_1',
+        title: '画像の中の特定のオブジェクトを見つけてください',
+        description: '画像問題',
+        category: ProblemCategory.memory,
+        difficulty: 2,
+      ));
+
+      _dailyProblems = Future.value(selectedProblems);
+    } else {
+      // デフォルトのモックテスト
+      _dailyProblems = Future.value([
+        Problem(
+          id: '1',
+          title: '1週間前の出来事を思い出せますか？',
+          description: '通常問題',
+          category: ProblemCategory.memory,
+          difficulty: 2,
+        ),
+        Problem(
+          id: '2',
+          title: '音声を聞いて、正しい答えを選んでください。',
+          description: '音声問題',
+          category: ProblemCategory.language,
+          difficulty: 2,
+        ),
+        Problem(
+          id: 'image_problem_1',
+          title: '画像の中の特定のオブジェクトを見つけてください',
+          description: '画像問題',
+          category: ProblemCategory.memory,
+          difficulty: 2,
+        )
+      ]);
+    }
+
+    // モックデータを使用
     _problemResultTrends = Future.value(_mockProblemResultTrends);
+  }
+
+  // カテゴリ文字列をenumに変換するヘルパーメソッド
+  ProblemCategory _mapStringToProblemCategory(String category) {
+    switch (category) {
+      case '記憶力':
+        return ProblemCategory.memory;
+      case '言語能力':
+        return ProblemCategory.language;
+      case '注意力':
+        return ProblemCategory.recall;
+      case '計算能力':
+        return ProblemCategory.calculation;
+      case '見当識':
+        return ProblemCategory.orientation;
+      default:
+        return ProblemCategory.memory; // デフォルト
+    }
   }
 
   @override

@@ -19,9 +19,30 @@ class ApiService {
     );
   }
 
+  // ネットワーク接続を確認
+  Future<bool> checkNetworkConnection() async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://www.google.com'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('ネットワーク接続エラー: $e');
+      return false;
+    }
+  }
+
   // ユーザープロファイルを取得
   Future<User> fetchUserProfile(String userId) async {
     try {
+      // ネットワーク接続を確認
+      final hasConnection = await checkNetworkConnection();
+      if (!hasConnection) {
+        print('ネットワーク接続がありません');
+        return createDefaultUser();
+      }
+
       // 本番環境では実際のAPIエンドポイントを使用
       if (userId == 'dummy_user_id') {
         return createDefaultUser();
@@ -30,17 +51,25 @@ class ApiService {
       final response = await http.get(
         Uri.parse('https://api.example.com/users/$userId'),
         headers: {'Content-Type': 'application/json'},
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          print('APIリクエストがタイムアウトしました');
+          return http.Response('Timeout', 408);
+        },
       );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> userData = json.decode(response.body);
         return User.fromJson(userData);
       } else {
+        print('ユーザープロファイル取得エラー: ${response.statusCode}');
         // エラー時にデフォルトユーザーを返す
         return createDefaultUser();
       }
     } catch (e) {
       // 例外発生時にデフォルトユーザーを返す
+      print('ユーザープロファイル取得の例外: $e');
       return createDefaultUser();
     }
   }
@@ -75,7 +104,9 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final List<dynamic> body = json.decode(response.body);
-        return body.map((dynamic item) => HealthProgram.fromJson(item)).toList();
+        return body
+            .map((dynamic item) => HealthProgram.fromJson(item))
+            .toList();
       } else {
         throw Exception('Failed to load health programs');
       }
@@ -83,4 +114,4 @@ class ApiService {
       throw Exception('Error fetching health programs: $e');
     }
   }
-} 
+}
