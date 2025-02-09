@@ -461,6 +461,10 @@ class _LanguageProblemScreenState extends State<LanguageProblemScreen>
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
           widget.problem.title,
           style: TextStyle(

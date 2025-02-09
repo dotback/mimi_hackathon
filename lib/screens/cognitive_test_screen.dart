@@ -625,7 +625,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
     int score = _calculateScore();
     String comment = _generateComment(score);
 
-    Get.offAll(() => HomeScreen(), arguments: {
+    Get.to(() => HomeScreen(), arguments: {
       'initialTestResult': {
         'score': score,
         'comment': comment,
@@ -680,6 +680,10 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('認知機能テスト'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Get.back(),
+        ),
         actions: [
           TextButton(
             onPressed: () => _nextQuestion(null, skipped: true),

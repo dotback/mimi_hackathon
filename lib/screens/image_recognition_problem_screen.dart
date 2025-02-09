@@ -189,10 +189,14 @@ class _ImageRecognitionProblemScreenState
     return Scaffold(
       appBar: AppBar(
         title: Text('画像認識問題'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
           if (_currentState != ScreenState.imageSelection)
             IconButton(
-              icon: Icon(Icons.restart_alt),
+              icon: const Icon(Icons.restart_alt),
               onPressed: _resetScreen,
             ),
         ],

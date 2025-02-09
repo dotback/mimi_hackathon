@@ -201,7 +201,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('マイプロフィール'),
         onTap: () {
           Get.back();
-          Get.off(() => const UserProfileScreen());
+          Get.to(() => const UserProfileScreen());
         },
       ),
       ListTile(
@@ -491,7 +491,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(16),
           onTap: () {
             // ナビゲーション時に遷移アニメーションを追加
-            Get.offAll(
+            Get.to(
               () => DailyProblemScreen(),
               transition: Transition.fadeIn,
               duration: const Duration(milliseconds: 300),
@@ -578,7 +578,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(16),
           onTap: () async {
             // ナビゲーション時に遷移アニメーションを追加
-            Get.offAll(
+            Get.to(
               () => const CognitiveTestScreen(),
               transition: Transition.fadeIn,
               duration: const Duration(milliseconds: 300),

@@ -7,6 +7,7 @@ import '../logic/services/problem_service.dart';
 import 'problem_solve_screen.dart';
 import 'language_problem_screen.dart';
 import 'image_recognition_problem_screen.dart';
+import 'package:get/get.dart';
 
 class DailyProblemScreen extends StatefulWidget {
   const DailyProblemScreen({super.key});
@@ -93,6 +94,10 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
             style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
         backgroundColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Get.back(),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
