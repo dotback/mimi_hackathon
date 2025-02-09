@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../services/auth_service.dart';
+import '../screens/home_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -60,6 +62,63 @@ class _LoginDialogContentState extends State<LoginDialogContent>
       _emailController.clear();
       _passwordController.clear();
     });
+  }
+
+  void _handleLogin() async {
+    final authService = Get.find<AuthService>();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      Get.snackbar('エラー', 'メールアドレスとパスワードを入力してください');
+      return;
+    }
+
+    try {
+      print('ログイン試行: $email'); // デバッグログ
+      final user = await authService.signIn(email, password);
+      if (user != null) {
+        print('ログイン成功: ${user.uid}'); // デバッグログ
+        print('ユーザーメール: ${user.email}'); // デバッグログ
+
+        // メールアドレスを明示的に保存
+        await authService.saveUserEmail(email);
+
+        Get.offAll(() => const HomeScreen());
+      } else {
+        Get.snackbar('エラー', 'ログインに失敗しました');
+      }
+    } catch (e) {
+      print('ログイン中のエラー: $e'); // デバッグログ
+      Get.snackbar('エラー', 'ログイン中にエラーが発生しました: $e');
+    }
+  }
+
+  void _handleSignUp() async {
+    final authService = Get.find<AuthService>();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      Get.snackbar('エラー', 'メールアドレスとパスワードを入力してください');
+      return;
+    }
+
+    try {
+      print('新規登録試行: $email'); // デバッグログ
+      final user = await authService.signUp(email, password);
+      if (user != null) {
+        print('新規登録成功: ${user.uid}'); // デバッグログ
+        print('ユーザーメール: ${user.email}'); // デバッグログ
+        await authService.saveUserEmail(email);
+        Get.offAll(() => const HomeScreen());
+      } else {
+        Get.snackbar('エラー', '新規登録に失敗しました');
+      }
+    } catch (e) {
+      print('新規登録中のエラー: $e'); // デバッグログ
+      Get.snackbar('エラー', '新規登録中にエラーが発生しました: $e');
+    }
   }
 
   @override
@@ -147,7 +206,11 @@ class _LoginDialogContentState extends State<LoginDialogContent>
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Get.back();
+                if (_isLogin) {
+                  _handleLogin();
+                } else {
+                  _handleSignUp();
+                }
               },
               child: Text('メールアドレスで${_isLogin ? 'ログイン' : '新規登録'}'),
               style: ElevatedButton.styleFrom(

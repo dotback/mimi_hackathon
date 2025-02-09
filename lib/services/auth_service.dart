@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -26,11 +27,21 @@ class AuthService extends GetxController {
     }
   }
 
+  // ログイン後にメールアドレスを保存するメソッド
+  Future<void> saveUserEmail(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_email', email);
+  }
+
   // ログイン
   Future<User?> signIn(String email, String password) async {
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(
           email: email, password: password);
+
+      // ログイン成功時にメールアドレスを保存
+      await saveUserEmail(email);
+
       return result.user;
     } on FirebaseAuthException catch (e) {
       print('ログインエラー: ${e.message}');

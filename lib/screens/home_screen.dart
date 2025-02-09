@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
-import '../data/models/user.dart';
+import '../data/models/user.dart' as local_user;
 import '../logic/services/api_service.dart';
 import '../logic/services/api_cognitive_test_service.dart';
 import 'package:get/get.dart';
@@ -25,8 +27,9 @@ class _HomeScreenState extends State<HomeScreen> {
   late final ApiService _apiService;
   late final ApiCognitiveTestService _cognitiveTestService;
   late final SharedPreferencesService _sharedPreferencesService;
-  late Future<User> _user;
+  late Future<local_user.User> _user;
   Map<String, dynamic>? _cognitiveTestResult;
+  String _userEmail = 'ゲストユーザー';
 
   /// モックデータ: ToDoリスト
   // ignore: unused_field
@@ -72,8 +75,28 @@ class _HomeScreenState extends State<HomeScreen> {
     _apiService = ApiService();
     _cognitiveTestService = ApiCognitiveTestService();
     _sharedPreferencesService = SharedPreferencesService();
-    // ユーザープロファイルと認知機能テスト結果の取得
-    _initializeData();
+
+    // デフォルトのユーザーを初期化
+    _user = Future.value(local_user.User(
+      name: 'ゲストユーザー',
+      gender: 'unknown',
+      age: 0,
+      exerciseHabit: 'none',
+      sleepHours: 0.0,
+      email: '',
+      birthday: DateTime(1960, 1, 1),
+    ));
+
+    // メールアドレスの読み込みを最初に実行
+    _loadUserEmail().then((_) {
+      // ユーザープロファイルと認知機能テスト結果の取得
+      _initializeData();
+
+      // 初期テスト結果がある場合は保存する
+      if (Get.arguments != null && Get.arguments['initialTestResult'] != null) {
+        _saveInitialTestResult(Get.arguments['initialTestResult']);
+      }
+    });
   }
 
   @override
@@ -87,12 +110,34 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// ユーザープロファイルと認知機能テスト結果を初期化する
   Future<void> _initializeData() async {
-    _fetchUserProfile();
-    await _fetchCognitiveTestResult();
+    try {
+      // ユーザーIDを取得（ログイン中のユーザーから）
+      final currentUser = firebase_auth.FirebaseAuth.instance.currentUser;
+      final userId = currentUser?.uid ?? 'dummy_user_id';
 
-    // 初期テスト結果がある場合は保存する
-    if (Get.arguments != null && Get.arguments['initialTestResult'] != null) {
-      await _saveInitialTestResult(Get.arguments['initialTestResult']);
+      // ユーザープロファイルを取得
+      final fetchedUser = await _apiService.fetchUserProfile(userId);
+
+      setState(() {
+        _user = Future.value(fetchedUser);
+      });
+
+      // 認知機能テスト結果を取得
+      await _fetchCognitiveTestResult();
+    } catch (e) {
+      print('データ初期化中のエラー: $e');
+      // エラー時のフォールバック
+      setState(() {
+        _user = Future.value(local_user.User(
+          name: 'ゲストユーザー',
+          gender: 'unknown',
+          age: 0,
+          exerciseHabit: 'none',
+          sleepHours: 0.0,
+          email: '',
+          birthday: DateTime(1960, 1, 1),
+        ));
+      });
     }
   }
 
@@ -115,9 +160,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _saveInitialTestResult(
       Map<String, dynamic> initialTestResult) async {
     try {
-      User user = await _user;
+      local_user.User user = await _user;
 
-      User updatedUser = await _cognitiveTestService.saveCognitiveTestResult(
+      local_user.User updatedUser =
+          await _cognitiveTestService.saveCognitiveTestResult(
         user: user,
         cognitiveFunctionScore: initialTestResult['score'],
         cognitiveFunctionComment: initialTestResult['comment'],
@@ -168,6 +214,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final AuthService authService = Get.find<AuthService>();
     await authService.signOut();
     await _sharedPreferencesService.clearLoginStatus();
+
+    // メールアドレスをクリア
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('user_email');
+    setState(() {
+      _userEmail = 'ゲストユーザー';
+    });
 
     if (!mounted) return;
 
@@ -314,7 +367,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// ヘッダー部分を構築する（デザイン更新）
-  Widget _buildHeader(BuildContext context, User user) {
+  Widget _buildHeader(BuildContext context, local_user.User user) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -343,7 +396,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'こんにちは、${user.name}さん',
+                    'こんにちは、$_userEmailさん',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -639,12 +692,47 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// ユーザーのメールアドレスをローカルストレージから読み込む
+  Future<void> _loadUserEmail() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final storedEmail = prefs.getString('user_email');
+
+      print('SharedPreferencesから読み込まれたメールアドレス: $storedEmail');
+
+      // ログイン中のユーザーのメールアドレスを取得
+      final currentUser = firebase_auth.FirebaseAuth.instance.currentUser;
+      final userEmail = currentUser?.email;
+
+      print('現在ログイン中のユーザーのメールアドレス: $userEmail');
+
+      setState(() {
+        // 優先順位: 1. ログイン中のユーザーのメールアドレス 2. SharedPreferencesに保存されたメールアドレス 3. ゲストユーザー
+        _userEmail = userEmail ?? storedEmail ?? 'ゲストユーザー';
+        print('最終的に設定されたメールアドレス: $_userEmail');
+      });
+    } catch (e) {
+      print('メールアドレス読み込み中のエラー: $e');
+      setState(() {
+        _userEmail = 'ゲストユーザー';
+      });
+    }
+  }
+
+  /// ログイン時にメールアドレスを保存するメソッドを追加
+  Future<void> saveUserEmail(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_email', email);
+    setState(() {
+      _userEmail = email;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text('ホーム'),
         backgroundColor: Colors.blue.shade600,
         elevation: 0,
       ),
@@ -654,7 +742,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             UserAccountsDrawerHeader(
               accountName: const Text('ユーザー名'),
-              accountEmail: const Text('user@example.com'),
+              accountEmail: Text(_userEmail),
               currentAccountPicture: CircleAvatar(
                 backgroundColor: Colors.white,
                 backgroundImage: const AssetImage('assets/images/user_icon.png')
@@ -673,18 +761,35 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       body: SafeArea(
-        child: FutureBuilder<User>(
+        child: FutureBuilder<local_user.User>(
           future: _user,
           builder: (context, snapshot) {
+            // 読み込み中の状態
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('エラー: ${snapshot.error}'));
-            } else if (!snapshot.hasData) {
-              return const Center(child: Text('データがありません'));
             }
 
-            User user = snapshot.data!;
+            // エラーまたはデータがない場合のフォールバック
+            if (snapshot.hasError || !snapshot.hasData) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('ユーザー情報を読み込めませんでした'),
+                    ElevatedButton(
+                      onPressed: () {
+                        // データの再読み込み
+                        _initializeData();
+                      },
+                      child: const Text('再読み込み'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // データが正常に読み込まれた場合
+            local_user.User user = snapshot.data!;
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
