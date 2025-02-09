@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hexcolor/hexcolor.dart';
+import 'package:mimi/signup/sign_up_screen.dart';
 import '../../components/my_button.dart';
 import '../../components/my_textfield.dart';
 import 'package:flutter/foundation.dart';
@@ -212,6 +213,35 @@ class _LoginBodyScreenState extends State<LoginBodyScreen> {
                                           onPressed: _loginButtonPressed,
                                         ),
                                       )),
+                                TextButton(
+                                  onPressed: () {
+                                    Get.to(
+                                      () => const SignUpScreen(),
+                                      transition: Transition.fadeIn,
+                                      duration:
+                                          const Duration(milliseconds: 500),
+                                    );
+                                  },
+                                  child: RichText(
+                                    text: TextSpan(
+                                      text: 'アカウントをお持ちでない方は',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        color: HexColor("#8d8d8d"),
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: ' 新規登録',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 14,
+                                            color: HexColor("#44564a"),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ],
