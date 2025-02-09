@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/models/user.dart';
 import '../utils/helper.dart';
-import '../services/profile_service.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -19,7 +18,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   String? _exerciseHabit;
   final _sleepHoursController = TextEditingController();
   bool _isLoading = true;
-  final ProfileService _profileService = ProfileService();
 
   @override
   void initState() {
@@ -33,16 +31,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         _isLoading = true;
       });
 
-      // APIからプロフィール情報を取得
-      User user = await _profileService.fetchUserProfile();
+      // SharedPreferencesからプロフィール情報を取得
+      final prefs = await SharedPreferences.getInstance();
 
       setState(() {
-        _nameController.text = user.name;
-        _selectedGender = user.gender;
-        _ageController.text = user.age.toString();
-        _selectedBirthday = user.birthday;
-        _exerciseHabit = user.exerciseHabit;
-        _sleepHoursController.text = user.sleepHours.toString();
+        _nameController.text = prefs.getString('name') ?? '';
+        _selectedGender = prefs.getString('gender') ?? '未設定';
+        _ageController.text = prefs.getString('age') ?? '0';
+        _selectedBirthday = prefs.getString('birthday') != null
+            ? DateTime.parse(prefs.getString('birthday')!)
+            : null;
+        _exerciseHabit = prefs.getString('exerciseHabit') ?? '';
+        _sleepHoursController.text = prefs.getString('sleepHours') ?? '0.0';
         _isLoading = false;
       });
     } catch (e) {

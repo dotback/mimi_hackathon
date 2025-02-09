@@ -18,7 +18,7 @@ class GeminiService {
       local_user.User userData) async {
     try {
       final prompt = '''
-認知症予防のためのパーソナライズされた認知機能テストを作成してください。
+認知症予防のためのパーソナライズされた認知機能テストとToDOリストを作成してください。
 
 ユーザープロファイル:
 - 年齢: ${userData.age}歳
@@ -32,45 +32,80 @@ class GeminiService {
 
 テストの要件:
 1. 2つの異なるタイプの問題を作成:
-   a) 通常問題
+   a) 通常問題（テキスト入力）
    b) 音声問題
 
-2. 問題のテンプレート例:
-通常問題の例:
+2. 通常問題（テキスト入力）のテンプレート例:
 {
   "type": "通常問題",
-  "category": "記憶力",
-  "question": "1週間前の出来事を具体的に思い出せますか？",
-  "options": [
-    "はい、詳細に覚えています",
-    "おおよそ覚えています", 
-    "ほとんど覚えていません",
-    "全く覚えていません"
-  ],
-  "correctAnswer": "はい、詳細に覚えています"
+  "category": "言語能力",
+  "title": "最近読んだ本について教えてください",
+  "description": "最近読んだ本の題名、著者、そしてその本から学んだことや感銘を受けた部分について具体的に書いてください。",
+  "correctAnswer": "具体的で詳細な回答を評価",
+  "difficulty": 2
 }
 
-音声問題の例:
+3. 音声問題の例:
 {
   "type": "音声問題",
   "category": "言語能力",
-  "question": "あなたの子供の頃について教えてください,
-  "correctAnswer": "子供の頃について3個以上の物事について話せると正解です"
+  "question": "子供の頃の思い出を音声で話してください",
+  "description": "あなたの子供の頃の一番楽しかった思い出を話してください。", // できるだけ簡潔なdescriptionを作成
+  "correctAnswer": "詳細に話せた",
+  "difficulty": 2
 }
 
-3. 問題の難易度は、年齢と直近のテストスコアに基づいて調整してください。
+4. 問題の難易度は、年齢と直近のテストスコアに基づいて調整してください。
    - テストスコアが低い場合は、より簡単な問題
    - テストスコアが高い場合は、より難しい問題
 
-4. JSONフォーマットで返してください：
+5. ToDoリストの要件
+   - ユーザーの年齢、性別、睡眠時間、運動習慣に合わせたToDoリストを作成
+   - 3つのToDoリストを作成
+   - シンプルで明確な指示
+   - 安全性を考慮
+   - 認知機能に合わせた難易度
+
+6. ToDoリストの例:
+{
+  "todoList": [
+    {
+      "title": "朝の体操",
+      "description": "朝に体操をします",
+      "icon": "アイコンの名前",
+      "completed": false,
+      "difficulty": 1, 2, または 3
+    }
+  ]
+}
+
+7. JSONフォーマットで返してください：
 {
   "dailyProblems": [
     {
-      "type": "通常問題" または "音声問題",
-      "category": "記憶力" または "注意力" または "言語能力" など,
-      "question": "問題文",
-      "options": ["選択肢1", "選択肢2", "選択肢3", "選択肢4"],
-      "correctAnswer": "正解の選択肢"
+      "type": "通常問題",
+      "category": "記憶力",
+      "title": "1週間前の出来事を思い出せますか？",
+      "description": "通常問題",
+      "correctAnswer": "正確に出来事を説明できること",
+      "difficulty": 2
+    },
+    {
+      "type": "音声問題",
+      "category": "言語能力",
+      "title": "子供の頃の思い出を音声で話してください",
+      "description": "あなたの子供の頃の一番楽しかった思い出を話してください。",
+      "correctAnswer": "詳細に話せた",
+      "difficulty": 2
+    }
+  ],
+  "todoList": [
+    {
+      "title": "朝の体操",
+      "description": "朝に体操をします",
+      "icon": "exercise",
+      "completed": false,
+      "difficulty": 2
     }
   ]
 }
@@ -121,10 +156,12 @@ class GeminiService {
           // 必要なキーが存在することを確認
           if (parsedJson is Map) {
             final dailyProblems = parsedJson['dailyProblems'];
-            if (dailyProblems is List) {
+            final todoList = parsedJson['todoList'];
+            if (dailyProblems is List && todoList is List) {
               print('抽出に成功したJSON: $potentialJson');
               return {
                 'dailyProblems': dailyProblems,
+                'todoList': todoList,
               };
             }
           }
@@ -154,5 +191,17 @@ class GeminiService {
     final prefs = await SharedPreferences.getInstance();
     final testJson = prefs.getString('personalized_test');
     return testJson != null ? json.decode(testJson) : null;
+  }
+
+  Future<List<dynamic>> getLocalTodoList() async {
+    final prefs = await SharedPreferences.getInstance();
+    final testJson = prefs.getString('personalized_test');
+
+    if (testJson != null) {
+      final parsedTest = json.decode(testJson);
+      return parsedTest['todoList'] ?? [];
+    }
+
+    return [];
   }
 }

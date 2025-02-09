@@ -34,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _userEmail = 'ゲストユーザー';
   late final GeminiService _geminiService;
   bool _isGeneratingTest = false;
+  List<dynamic> _todoList = [];
 
   /// モックデータ: ToDoリスト
   // ignore: unused_field
@@ -328,7 +329,15 @@ class _HomeScreenState extends State<HomeScreen> {
         trailing: Checkbox(
           value: todo['completed'],
           onChanged: (bool? value) {
-            // TODO: ToDoの完了状態を更新する処理
+            // ToDoの完了状態を更新
+            setState(() {
+              // 元のリストを更新
+              final index = _todoList
+                  .indexWhere((item) => item['title'] == todo['title']);
+              if (index != -1) {
+                _todoList[index]['completed'] = value ?? false;
+              }
+            });
           },
         ),
       ),
@@ -446,6 +455,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// ToDoリストを表示するウィジェットを構築（デザイン更新）
   Widget _buildToDoList(BuildContext context) {
+    // _todoListが空の場合はToDoリストを表示しない
+    if (_todoList.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final todoListToShow = _todoList
+        .map((todo) => {
+              'title': todo['title'] ?? '',
+              'completed': todo['completed'] ?? false,
+              'icon': _getIconForTodo(todo['title'] ?? ''),
+            })
+        .toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -469,10 +491,24 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        // モックのToDoリストを表示
-        ..._mockTodoList.map((todo) => _buildTodoListItem(todo)).toList(),
+        // ToDoリストを表示
+        ...todoListToShow.map((todo) => _buildTodoListItem(todo)).toList(),
       ],
     );
+  }
+
+  // ToDoのタイトルに基づいてアイコンを取得するヘルパーメソッド
+  IconData _getIconForTodo(String title) {
+    switch (title.toLowerCase()) {
+      case '朝の体操':
+        return Icons.fitness_center;
+      case '脳トレアプリ':
+        return Icons.psychology;
+      case '散歩':
+        return Icons.directions_walk;
+      default:
+        return Icons.task; // デフォルトのアイコン
+    }
   }
 
   /// ToDoを追加するダイアログ
@@ -539,7 +575,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     else
                       ElevatedButton.icon(
                         icon: const Icon(Icons.auto_awesome),
-                        label: const Text('AI問題生成'),
+                        label: const Text('AIパーソナライズ'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
@@ -800,24 +836,33 @@ class _HomeScreenState extends State<HomeScreen> {
       // ユーザーデータを取得
       local_user.User user = await _user;
 
+      // 問題とToDoリストを同時に生成
       final generatedTest = await _geminiService.generatePersonalizedTest(
           _cognitiveTestResult!, user);
 
       // オーバーレイを削除
       overlayEntry.remove();
 
-      // 成功メッセージを表示
-      _showSuccessDialog(context, 'AIがパーソナライズされた問題を生成しました！');
+      // ローカルストレージから明示的にToDoリストを取得
+      final todoList = await _geminiService.getLocalTodoList();
+      print('取得したToDoリスト: $todoList'); // デバッグ用のログ出力
 
-      // 生成されたテストを使用して今日の課題画面に遷移
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => DailyProblemScreen(
-            personalizedTest: generatedTest,
-          ),
-        ),
-      );
+      // ToDoリストを更新（completedフィールドを追加）
+      final updatedTodoList = todoList
+          .map((todo) => {
+                ...todo,
+                'completed': false, // 初期状態は未完了
+                'icon': _getIconForTodo(todo['title'] ?? ''),
+              })
+          .toList();
+
+      // ToDoリストを更新
+      setState(() {
+        _todoList = updatedTodoList;
+      });
+
+      // 成功メッセージを表示
+      _showSuccessDialog(context, 'AIがパーソナライズされた問題とToDoリストを生成しました！');
     } catch (e) {
       // オーバーレイを削除
       overlayEntry.remove();
@@ -842,7 +887,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 SizedBox(height: 20),
                 Text(
-                  'Gemini AIが問題を生成しています...',
+                  'Gemini AIがパーソナライズされた問題とToDoリストを生成しています...',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,

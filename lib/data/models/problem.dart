@@ -11,6 +11,7 @@ class Problem {
   final List<String>? answers;
   final String? imagePath;
   final DateTime createdAt;
+  final String? type;
 
   Problem({
     required this.id,
@@ -22,6 +23,7 @@ class Problem {
     this.question,
     this.answers,
     this.imagePath,
+    this.type,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -40,6 +42,7 @@ class Problem {
       answers:
           json['answers'] != null ? List<String>.from(json['answers']) : null,
       imagePath: json['imagePath'],
+      type: json['type'],
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
@@ -57,6 +60,7 @@ class Problem {
       'question': question,
       'answers': answers,
       'imagePath': imagePath,
+      'type': type,
       'createdAt': createdAt.toIso8601String(),
     };
   }

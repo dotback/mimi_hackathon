@@ -175,6 +175,10 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
   late Animation<double> _timerAnimation;
   final _apiService = GeminiProblemGenerationService();
 
+  // クラスレベルで状態を管理
+  bool _isTestCompleted = false;
+  bool _isDialogShowing = false;
+
   @override
   void initState() {
     super.initState();
@@ -214,7 +218,12 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
   }
 
   void _startQuestionTimer() {
-    // タイマーを初期化して開始
+    // テストが既に完了している場合は何もしない
+    if (_isTestCompleted || _currentQuestionIndex >= _questions.length) {
+      return;
+    }
+
+    // 既存のタイマー初期化処理
     _remainingTime = _questions[_currentQuestionIndex]['timeLimit'];
     _timerAnimationController.reset();
     _timerAnimationController.forward();
@@ -228,168 +237,42 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
     }
 
     _questionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      // テストが既に完了している場合はタイマーを停止
+      if (_isTestCompleted) {
+        timer.cancel();
+        return;
+      }
+
       setState(() {
         _remainingTime--;
       });
 
       if (_remainingTime <= 0) {
-        _questionTimer?.cancel();
-        _nextQuestion(null);
+        timer.cancel();
+
+        // 最後の問題でない場合のみ次の問題に進む
+        if (_currentQuestionIndex < _questions.length - 1) {
+          _nextQuestion(null);
+        } else {
+          // テストを最終確定
+          _finalizeTest();
+        }
       }
     });
   }
 
   void _nextQuestion(String? answer, {bool skipped = false}) async {
+    // すでにテストが完了している場合は何もしない
+    if (_isTestCompleted) {
+      return;
+    }
+
     _questionTimer?.cancel();
     _timerAnimationController.stop();
 
     if (!skipped && answer != null) {
       _userAnswers.add(answer);
-
-      switch (_questions[_currentQuestionIndex]['type']) {
-        case 'reverse_number_memory':
-          try {
-            // 回答を解析
-            final selectedAnswers = answer.split('|');
-            final multipleChoiceQuestions =
-                _questions[_currentQuestionIndex]['multipleChoiceQuestions'];
-
-            // 各多肢選択問題で正解を選んだら1点
-            for (var i = 0; i < multipleChoiceQuestions.length; i++) {
-              if (selectedAnswers[i] ==
-                  multipleChoiceQuestions[i]['correctAnswer']) {
-                _score++;
-              }
-            }
-          } catch (e) {
-            print('逆数字メモリーテストの検証中にエラーが発生しました: $e');
-          }
-          break;
-
-        case 'math_stage1':
-          // 問題で正解を選んだら1点
-          if (answer == _questions[_currentQuestionIndex]['correctAnswer']) {
-            _score++;
-          }
-
-          // 次のステージがある場合は進む
-          if (_questions[_currentQuestionIndex].containsKey('nextStage')) {
-            setState(() {
-              // 現在の質問のnextStageを次の質問として挿入
-              _questions.insert(_currentQuestionIndex + 1,
-                  _questions[_currentQuestionIndex]['nextStage']);
-              _currentQuestionIndex++;
-              _startQuestionTimer();
-            });
-            return;
-          }
-          break;
-
-        case 'memory_stage1':
-          try {
-            // 回答を解析
-            final selectedAnswers = answer.split('|');
-            final multipleChoiceQuestions =
-                _questions[_currentQuestionIndex]['multipleChoiceQuestions'];
-
-            // 各多肢選択問題で正解を選んだら1点
-            for (var i = 0; i < multipleChoiceQuestions.length; i++) {
-              if (selectedAnswers[i] ==
-                  multipleChoiceQuestions[i]['correctAnswer']) {
-                _score++;
-              }
-            }
-          } catch (e) {
-            print('メモリーテストの検証中にエラーが発生しました: $e');
-          }
-          break;
-
-        case 'location_description':
-          // 自発的で具体的な回答であれば2点
-          if (answer.trim().isNotEmpty && answer.length > 2) {
-            _score += 2;
-          }
-          break;
-
-        case 'detailed_date':
-          try {
-            // 正解の日付を取得
-            final correctDate =
-                _questions[_currentQuestionIndex]['correctAnswer'];
-
-            // 入力された値を解析
-            final parts = answer.split('|');
-            if (parts.length == 4) {
-              // 年、月、日、曜日それぞれ1点
-              if (parts[0] == correctDate['year']) _score++;
-              if (parts[1] == correctDate['month']) _score++;
-              if (parts[2] == correctDate['day']) _score++;
-              if (parts[3] == correctDate['weekday']) _score++;
-            }
-          } catch (e) {
-            print('日付の検証中にエラーが発生しました: $e');
-          }
-          break;
-
-        case 'age':
-          try {
-            // ユーザーの年齢を取得
-            User user = await _apiService.fetchUserProfile('dummy_user_id');
-            int userAge = user.age;
-            int answeredAge = int.parse(answer);
-
-            // 誤差2年以内であれば1点
-            if ((userAge - answeredAge).abs() <= 2) {
-              _score++;
-            }
-          } catch (e) {
-            // 年齢の取得や比較に失敗した場合は0点
-            print('年齢の検証中にエラーが発生しました: $e');
-          }
-          break;
-
-        case 'date':
-          if (answer == _questions[_currentQuestionIndex]['correctAnswer']) {
-            _score++;
-          }
-          break;
-        case 'season':
-        case 'animal':
-        case 'recall':
-          if (_questions[_currentQuestionIndex]['options'].contains(answer)) {
-            _score++;
-          }
-          break;
-        case 'image_memory':
-          try {
-            // 回答を解析
-            final selectedAnswers = answer.split('|');
-            final multipleChoiceQuestions =
-                _questions[_currentQuestionIndex]['multipleChoiceQuestions'];
-
-            // 各多肢選択問題で正解を選んだら1点
-            for (var i = 0; i < multipleChoiceQuestions.length; i++) {
-              if (selectedAnswers[i] ==
-                  multipleChoiceQuestions[i]['correctAnswer']) {
-                _score++;
-              }
-            }
-          } catch (e) {
-            print('画像メモリーテストの検証中にエラーが発生しました: $e');
-          }
-          break;
-        case 'vegetable_list':
-          try {
-            // 入力された野菜のリストを解析
-            final List<String> vegetables = answer.split(',');
-            // 野菜の数を点数として加算
-            _score += vegetables.length;
-          } catch (e) {
-            print('野菜リストの検証中にエラーが発生しました: $e');
-          }
-          break;
-        // 他の質問タイプの採点ロジック
-      }
+      _processAnswer(answer);
     }
 
     _textController.clear();
@@ -399,40 +282,67 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
         _currentQuestionIndex++;
         _startQuestionTimer();
       } else {
-        _showResultDialog();
+        // テストを最終確定
+        _finalizeTest();
       }
     });
   }
 
+  void _finalizeTest() {
+    // 複数回呼び出されないように保護
+    if (_isTestCompleted) return;
+
+    _isTestCompleted = true;
+    _questionTimer?.cancel();
+
+    // モーダルが既に表示されていないことを確認
+    if (!_isDialogShowing) {
+      _showResultDialog();
+    }
+  }
+
   void _showResultDialog() {
+    // ダイアログが既に表示されている場合は何もしない
+    if (_isDialogShowing || !_isTestCompleted) {
+      return;
+    }
+
+    _isDialogShowing = true;
+
     final resultComment = _getResultInterpretation();
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('認知機能テスト結果'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('スコア: $_score',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
-              Text(
-                resultComment,
-                textAlign: TextAlign.center,
+        return WillPopScope(
+          onWillPop: () async => false,
+          child: AlertDialog(
+            title: const Text('認知機能テスト結果'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('スコア: $_score',
+                    style:
+                        TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                Text(
+                  resultComment,
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  // ダイアログ表示状態をリセット
+                  _isDialogShowing = false;
+                  _finishTest();
+                },
+                child: const Text('閉じる'),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                _finishTest();
-              },
-              child: const Text('閉じる'),
-            ),
-          ],
         );
       },
     );
@@ -912,6 +822,154 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
         ),
       ),
     );
+  }
+
+  // 採点ロジックを別メソッドに分離
+  void _processAnswer(String answer) async {
+    switch (_questions[_currentQuestionIndex]['type']) {
+      case 'reverse_number_memory':
+        try {
+          // 回答を解析
+          final selectedAnswers = answer.split('|');
+          final multipleChoiceQuestions =
+              _questions[_currentQuestionIndex]['multipleChoiceQuestions'];
+
+          // 各多肢選択問題で正解を選んだら1点
+          for (var i = 0; i < multipleChoiceQuestions.length; i++) {
+            if (selectedAnswers[i] ==
+                multipleChoiceQuestions[i]['correctAnswer']) {
+              _score++;
+            }
+          }
+        } catch (e) {
+          print('逆数字メモリーテストの検証中にエラーが発生しました: $e');
+        }
+        break;
+
+      case 'math_stage1':
+        // 問題で正解を選んだら1点
+        if (answer == _questions[_currentQuestionIndex]['correctAnswer']) {
+          _score++;
+        }
+
+        // 次のステージがある場合は進む
+        if (_questions[_currentQuestionIndex].containsKey('nextStage')) {
+          setState(() {
+            // 現在の質問のnextStageを次の質問として挿入
+            _questions.insert(_currentQuestionIndex + 1,
+                _questions[_currentQuestionIndex]['nextStage']);
+            _currentQuestionIndex++;
+            _startQuestionTimer();
+          });
+          return;
+        }
+        break;
+
+      case 'memory_stage1':
+        try {
+          // 回答を解析
+          final selectedAnswers = answer.split('|');
+          final multipleChoiceQuestions =
+              _questions[_currentQuestionIndex]['multipleChoiceQuestions'];
+
+          // 各多肢選択問題で正解を選んだら1点
+          for (var i = 0; i < multipleChoiceQuestions.length; i++) {
+            if (selectedAnswers[i] ==
+                multipleChoiceQuestions[i]['correctAnswer']) {
+              _score++;
+            }
+          }
+        } catch (e) {
+          print('メモリーテストの検証中にエラーが発生しました: $e');
+        }
+        break;
+
+      case 'location_description':
+        // 自発的で具体的な回答であれば2点
+        if (answer.trim().isNotEmpty && answer.length > 2) {
+          _score += 2;
+        }
+        break;
+
+      case 'detailed_date':
+        try {
+          // 正解の日付を取得
+          final correctDate =
+              _questions[_currentQuestionIndex]['correctAnswer'];
+
+          // 入力された値を解析
+          final parts = answer.split('|');
+          if (parts.length == 4) {
+            // 年、月、日、曜日それぞれ1点
+            if (parts[0] == correctDate['year']) _score++;
+            if (parts[1] == correctDate['month']) _score++;
+            if (parts[2] == correctDate['day']) _score++;
+            if (parts[3] == correctDate['weekday']) _score++;
+          }
+        } catch (e) {
+          print('日付の検証中にエラーが発生しました: $e');
+        }
+        break;
+
+      case 'age':
+        try {
+          // ユーザーの年齢を取得
+          User user = await _apiService.fetchUserProfile('dummy_user_id');
+          int userAge = user.age;
+          int answeredAge = int.parse(answer);
+
+          // 誤差2年以内であれば1点
+          if ((userAge - answeredAge).abs() <= 2) {
+            _score++;
+          }
+        } catch (e) {
+          // 年齢の取得や比較に失敗した場合は0点
+          print('年齢の検証中にエラーが発生しました: $e');
+        }
+        break;
+
+      case 'date':
+        if (answer == _questions[_currentQuestionIndex]['correctAnswer']) {
+          _score++;
+        }
+        break;
+      case 'season':
+      case 'animal':
+      case 'recall':
+        if (_questions[_currentQuestionIndex]['options'].contains(answer)) {
+          _score++;
+        }
+        break;
+      case 'image_memory':
+        try {
+          // 回答を解析
+          final selectedAnswers = answer.split('|');
+          final multipleChoiceQuestions =
+              _questions[_currentQuestionIndex]['multipleChoiceQuestions'];
+
+          // 各多肢選択問題で正解を選んだら1点
+          for (var i = 0; i < multipleChoiceQuestions.length; i++) {
+            if (selectedAnswers[i] ==
+                multipleChoiceQuestions[i]['correctAnswer']) {
+              _score++;
+            }
+          }
+        } catch (e) {
+          print('画像メモリーテストの検証中にエラーが発生しました: $e');
+        }
+        break;
+      case 'vegetable_list':
+        try {
+          // 入力された野菜のリストを解析
+          final List<String> vegetables = answer.split(',');
+          // 野菜の数を点数として加算
+          _score += vegetables.length;
+        } catch (e) {
+          print('野菜リストの検証中にエラーが発生しました: $e');
+        }
+        break;
+      // 他の質問タイプの採点ロジック
+    }
   }
 
   @override

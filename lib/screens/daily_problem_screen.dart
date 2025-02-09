@@ -3,7 +3,6 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:intl/intl.dart';
 import '../data/models/problem_result.dart';
 import '../data/models/problem.dart';
-import '../logic/services/problem_service.dart';
 import 'problem_solve_screen.dart';
 import 'language_problem_screen.dart';
 import 'image_recognition_problem_screen.dart';
@@ -22,7 +21,6 @@ class DailyProblemScreen extends StatefulWidget {
 }
 
 class _DailyProblemScreenState extends State<DailyProblemScreen> {
-  final ProblemService _problemService = ProblemService();
   late Future<List<Problem>> _dailyProblems;
   late Future<List<ProblemResult>> _problemResultTrends;
 
@@ -107,6 +105,7 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
           category: _mapStringToProblemCategory(
               selectedNormalProblem['category'] ?? ''),
           difficulty: 2, // デフォルトの難易度
+          type: '通常問題',
         ));
       }
 
@@ -118,10 +117,11 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
         selectedProblems.add(Problem(
           id: selectedVoiceProblem['id'] ?? '',
           title: selectedVoiceProblem['question'] ?? '',
-          description: selectedVoiceProblem['type'] ?? '',
-          category: _mapStringToProblemCategory(
-              selectedVoiceProblem['category'] ?? ''),
+          description: selectedVoiceProblem['description'] ??
+              '子供の頃の思い出について、できるだけ詳しく話してください。',
+          category: ProblemCategory.language,
           difficulty: 2, // デフォルトの難易度
+          type: '音声問題',
         ));
       }
 
@@ -132,6 +132,7 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
         description: '画像問題',
         category: ProblemCategory.memory,
         difficulty: 2,
+        type: '画像問題',
       ));
 
       _dailyProblems = Future.value(selectedProblems);
@@ -144,13 +145,15 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
           description: '通常問題',
           category: ProblemCategory.memory,
           difficulty: 2,
+          type: '通常問題',
         ),
         Problem(
           id: '2',
-          title: '音声を聞いて、正しい答えを選んでください。',
-          description: '音声問題',
+          title: '子供の頃の思い出を音声で話してください',
+          description: 'あなたの子供の頃の一番楽しかった思い出を話してください。',
           category: ProblemCategory.language,
           difficulty: 2,
+          type: '音声問題',
         ),
         Problem(
           id: 'image_problem_1',
@@ -158,6 +161,7 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
           description: '画像問題',
           category: ProblemCategory.memory,
           difficulty: 2,
+          type: '画像問題',
         )
       ]);
     }
@@ -480,19 +484,10 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Container(
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            _getDifficultyColor(problem.difficulty)
-                                .withOpacity(0.1),
-                            _getDifficultyColor(problem.difficulty)
-                                .withOpacity(0.3),
-                          ],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
+                        color: _getProblemBackgroundColor(problem.description),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: _getDifficultyColor(problem.difficulty),
+                          color: _getProblemBorderColor(problem.description),
                           width: 1.5,
                         ),
                       ),
@@ -502,11 +497,11 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: _getDifficultyColor(problem.difficulty),
+                            color: _getProblemBorderColor(problem.description),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            _getCategoryIcon(problem.category),
+                            _getProblemIcon(problem.description),
                             color: Colors.white,
                             size: 24,
                           ),
@@ -530,14 +525,15 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: _getDifficultyColor(problem.difficulty)
+                            color: _getProblemBorderColor(problem.description)
                                 .withOpacity(0.2),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             _getDifficultyText(problem.difficulty),
                             style: TextStyle(
-                              color: _getDifficultyColor(problem.difficulty),
+                              color:
+                                  _getProblemBorderColor(problem.description),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -556,7 +552,7 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
   }
 
   void _startProblem(Problem problem) {
-    // カテゴリに応じて適切な画面に遷移
+    // カテゴリと型に応じて適切な画面に遷移
     switch (problem.category) {
       case ProblemCategory.language:
         Navigator.push(
@@ -567,16 +563,26 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
         );
         break;
       case ProblemCategory.memory:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                ImageRecognitionProblemScreen(problem: problem),
-          ),
-        );
+        if (problem.description == '画像問題') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  ImageRecognitionProblemScreen(problem: problem),
+            ),
+          );
+        } else {
+          // 通常の記憶問題
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProblemSolveScreen(problem: problem),
+            ),
+          );
+        }
         break;
       default:
-        // 他のカテゴリの問題は既存の問題解決画面に遷移
+        // その他の問題はProblemSolveScreenで解く
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -620,31 +626,45 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
     return Colors.red;
   }
 
-  Color _getDifficultyColor(int difficulty) {
-    switch (difficulty) {
-      case 1:
-        return Colors.green;
-      case 2:
-        return Colors.orange;
-      case 3:
-        return Colors.red;
+  // 問題の種類に応じた背景色を取得
+  Color _getProblemBackgroundColor(String type) {
+    switch (type) {
+      case '通常問題':
+        return Colors.blue.shade50;
+      case '音声問題':
+        return Colors.green.shade50;
+      case '画像問題':
+        return Colors.purple.shade50;
       default:
-        return Colors.grey;
+        return Colors.grey.shade50;
     }
   }
 
-  IconData _getCategoryIcon(ProblemCategory category) {
-    switch (category) {
-      case ProblemCategory.memory:
-        return Icons.memory;
-      case ProblemCategory.recall:
-        return Icons.replay;
-      case ProblemCategory.calculation:
-        return Icons.calculate;
-      case ProblemCategory.language:
-        return Icons.language;
-      case ProblemCategory.orientation:
-        return Icons.navigation;
+  // 問題の種類に応じたボーダーカラーを取得
+  Color _getProblemBorderColor(String type) {
+    switch (type) {
+      case '通常問題':
+        return Colors.blue.shade200;
+      case '音声問題':
+        return Colors.green.shade200;
+      case '画像問題':
+        return Colors.purple.shade200;
+      default:
+        return Colors.grey.shade200;
+    }
+  }
+
+  // 問題の種類に応じたアイコンを取得
+  IconData _getProblemIcon(String type) {
+    switch (type) {
+      case '通常問題':
+        return Icons.text_fields;
+      case '音声問題':
+        return Icons.record_voice_over;
+      case '画像問題':
+        return Icons.image;
+      default:
+        return Icons.help_outline;
     }
   }
 }
