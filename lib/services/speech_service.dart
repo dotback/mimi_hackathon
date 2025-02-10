@@ -371,4 +371,11 @@ class SpeechService {
     _flutterTts.stop();
     _speechToText.stop();
   }
+
+  // マイク権限の確認メソッドを追加
+  Future<bool> checkMicPermission() async {
+    var micStatus = await Permission.microphone.request();
+    debugPrint('マイク権限の状態: $micStatus');
+    return micStatus == PermissionStatus.granted;
+  }
 }

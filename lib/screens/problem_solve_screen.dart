@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../data/models/problem.dart';
+import '../services/answer_evaluation_service.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class ProblemSolveScreen extends StatefulWidget {
   final Problem problem;
@@ -12,54 +14,56 @@ class ProblemSolveScreen extends StatefulWidget {
 
 class _ProblemSolveScreenState extends State<ProblemSolveScreen> {
   final TextEditingController _answerController = TextEditingController();
+  final AnswerEvaluationService _evaluationService = AnswerEvaluationService();
   bool _isSubmitted = false;
-  bool _isCorrect = false;
+  bool _isProcessing = false;
+  AnswerEvaluation? _evaluation;
 
-  void _submitAnswer() {
+  void _submitAnswer() async {
+    final userAnswer = _answerController.text.trim();
+
+    if (userAnswer.isEmpty) {
+      // 空の回答の場合は何もしない
+      return;
+    }
+
     setState(() {
-      _isSubmitted = true;
-      _isCorrect = _checkAnswer(_answerController.text);
+      _isProcessing = true;
     });
-  }
 
-  bool _checkAnswer(String userAnswer) {
-    // カテゴリに応じた簡単な正解判定
-    switch (widget.problem.category) {
-      case ProblemCategory.memory:
-        return _checkMemoryAnswer(userAnswer);
-      case ProblemCategory.recall:
-        return _checkRecallAnswer(userAnswer);
-      case ProblemCategory.calculation:
-        return _checkCalculationAnswer(userAnswer);
-      case ProblemCategory.orientation:
-        return _checkOrientationAnswer(userAnswer);
-      default:
-        return userAnswer.trim().isNotEmpty;
-    }
-  }
-
-  bool _checkMemoryAnswer(String userAnswer) {
-    // メモリ問題の簡単な正解判定
-    return userAnswer.trim() == widget.problem.correctAnswer.toString();
-  }
-
-  bool _checkRecallAnswer(String userAnswer) {
-    // 想起力問題の簡単な正解判定
-    return userAnswer.trim().isNotEmpty;
-  }
-
-  bool _checkCalculationAnswer(String userAnswer) {
-    // 計算問題の正解判定
     try {
-      return int.parse(userAnswer) == widget.problem.correctAnswer;
+      // Gemini APIで回答を評価
+      final evaluation = await _evaluationService.evaluateAnswer(
+          widget.problem.description, userAnswer);
+
+      setState(() {
+        _isSubmitted = true;
+        _isProcessing = false;
+        _evaluation = evaluation;
+      });
     } catch (e) {
-      return false;
+      setState(() {
+        _isProcessing = false;
+      });
+      // エラーハンドリング
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('回答の評価中にエラーが発生しました: $e')),
+      );
     }
   }
 
-  bool _checkOrientationAnswer(String userAnswer) {
-    // 見当識問題の簡単な正解判定
-    return userAnswer.trim().isNotEmpty;
+  // 結果の色を決定するメソッド
+  Color _getResultColor(String result) {
+    final lowercaseResult = result.toLowerCase();
+    if (lowercaseResult.contains('とても良い') ||
+        lowercaseResult.contains('素晴らしい')) {
+      return Colors.green.shade700;
+    } else if (lowercaseResult.contains('良い') ||
+        lowercaseResult.contains('頑張')) {
+      return Colors.blue.shade700;
+    } else {
+      return Colors.orange.shade700;
+    }
   }
 
   @override
@@ -106,43 +110,24 @@ class _ProblemSolveScreenState extends State<ProblemSolveScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                decoration: BoxDecoration(
-                  boxShadow: _isSubmitted
-                      ? [
-                          BoxShadow(
-                            color: _isCorrect
-                                ? Colors.green.withOpacity(0.3)
-                                : Colors.red.withOpacity(0.3),
-                            blurRadius: 10,
-                            spreadRadius: 2,
-                          )
-                        ]
-                      : [],
-                ),
-                child: TextField(
-                  controller: _answerController,
-                  decoration: InputDecoration(
-                    hintText: '答えを入力してください',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    enabled: !_isSubmitted,
-                    filled: true,
-                    fillColor: _isSubmitted
-                        ? (_isCorrect
-                            ? Colors.green.shade50
-                            : Colors.red.shade50)
-                        : Colors.white,
+              TextField(
+                controller: _answerController,
+                decoration: InputDecoration(
+                  hintText: '答えを入力してください',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 18),
+                  enabled: !_isSubmitted && !_isProcessing,
+                  filled: true,
+                  fillColor: _isSubmitted ? Colors.grey.shade100 : Colors.white,
                 ),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 18),
+                maxLines: 3,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _isSubmitted ? null : _submitAnswer,
+                onPressed: _isSubmitted || _isProcessing ? null : _submitAnswer,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -158,20 +143,152 @@ class _ProblemSolveScreenState extends State<ProblemSolveScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              if (_isSubmitted)
+
+              // 処理中インジケーター
+              if (_isProcessing)
                 Center(
-                  child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 300),
-                    opacity: _isSubmitted ? 1.0 : 0.0,
-                    child: Text(
-                      _isCorrect ? '正解！🎉' : '不正解。もう一度挑戦してください。',
-                      style: TextStyle(
-                        color: _isCorrect ? Colors.green : Colors.red,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                  child: Column(
+                    children: [
+                      LoadingAnimationWidget.staggeredDotsWave(
+                        color: Colors.blue,
+                        size: 80,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Gemini AIが回答を確認しています...',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+
+              // 結果表示
+              if (_isSubmitted && _evaluation != null)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // 結果
+                    Card(
+                      color: Colors.grey.shade100,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            Text(
+                              'AIからの評価',
+                              style: TextStyle(
+                                color: Colors.grey.shade800,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              _evaluation!.result,
+                              style: TextStyle(
+                                color: _getResultColor(_evaluation!.result),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    // あなたの回答
+                    Card(
+                      color: Colors.blue.shade50,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'あなたの回答',
+                              style: TextStyle(
+                                color: Colors.blue.shade700,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              _evaluation!.userAnswer,
+                              style: TextStyle(
+                                color: Colors.blue.shade700,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // 改善点
+                    Card(
+                      color: Colors.purple.shade50,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '学びのヒント',
+                              style: TextStyle(
+                                color: Colors.purple.shade700,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              _evaluation!.improvements,
+                              style: TextStyle(
+                                color: Colors.purple.shade700,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // 詳細説明
+                    Card(
+                      color: Colors.green.shade50,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '詳細な解説',
+                              style: TextStyle(
+                                color: Colors.green.shade700,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              _evaluation!.explanation,
+                              style: TextStyle(
+                                color: Colors.green.shade700,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
             ],
           ),

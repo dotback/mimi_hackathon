@@ -8,6 +8,8 @@ import 'language_problem_screen.dart';
 import 'image_recognition_problem_screen.dart';
 import 'package:get/get.dart';
 import 'home_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class DailyProblemScreen extends StatefulWidget {
   final Map<String, dynamic>? personalizedTest;
@@ -82,6 +84,110 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
     ),
   ];
 
+  // ローカルストレージから問題を読み込むメソッド
+  Future<List<Problem>> _loadProblemsFromLocalStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // 複数のキーを試す
+      final problemsJson = prefs.getString('personalized_daily_problems') ??
+          prefs.getString('personalized_test');
+
+      List<Problem> problems = [];
+
+      if (problemsJson != null) {
+        // JSONデータをデコード
+        List<dynamic> problemsList;
+
+        // personalized_testの場合は、dailyProblemsを取得
+        if (problemsJson.contains('"dailyProblems"')) {
+          final parsedJson = json.decode(problemsJson);
+          problemsList = parsedJson['dailyProblems'] ?? [];
+        } else {
+          problemsList = json.decode(problemsJson);
+        }
+
+        // Problemオブジェクトに変換
+        problems = problemsList.map((problemData) {
+          return Problem(
+            id: problemData['id'] ?? '',
+            title: problemData['title'] ?? problemData['question'] ?? '',
+            description:
+                problemData['description'] ?? problemData['type'] ?? '',
+            category:
+                _mapStringToProblemCategory(problemData['category'] ?? ''),
+            difficulty: problemData['difficulty'] ?? 2,
+            type: problemData['type'] ?? '',
+          );
+        }).toList();
+      }
+
+      // 画像問題を常に追加
+      problems.add(Problem(
+        id: 'image_problem_1',
+        title: '画像の中の特定のオブジェクトを見つけてください',
+        description: '画像問題',
+        category: ProblemCategory.memory,
+        difficulty: 2,
+        type: '画像問題',
+      ));
+
+      // 問題が空の場合はデフォルトの問題を追加
+      if (problems.isEmpty) {
+        problems.addAll([
+          Problem(
+            id: '1',
+            title: '1週間前の出来事を思い出せますか？',
+            description: '通常問題',
+            category: ProblemCategory.memory,
+            difficulty: 2,
+            type: '通常問題',
+          ),
+          Problem(
+            id: '2',
+            title: '子供の頃の思い出を音声で話してください',
+            description: 'あなたの子供の頃の一番楽しかった思い出を話してください。',
+            category: ProblemCategory.language,
+            difficulty: 2,
+            type: '音声問題',
+          ),
+        ]);
+      }
+
+      return problems;
+    } catch (e) {
+      print('問題の読み込み中にエラーが発生しました: $e');
+
+      // エラー時のデフォルト問題（画像問題を含む）
+      return [
+        Problem(
+          id: '1',
+          title: '1週間前の出来事を思い出せますか？',
+          description: '通常問題',
+          category: ProblemCategory.memory,
+          difficulty: 2,
+          type: '通常問題',
+        ),
+        Problem(
+          id: '2',
+          title: '子供の頃の思い出を音声で話してください',
+          description: 'あなたの子供の頃の一番楽しかった思い出を話してください。',
+          category: ProblemCategory.language,
+          difficulty: 2,
+          type: '音声問題',
+        ),
+        Problem(
+          id: 'image_problem_1',
+          title: '画像の中の特定のオブジェクトを見つけてください',
+          description: '画像問題',
+          category: ProblemCategory.memory,
+          difficulty: 2,
+          type: '画像問題',
+        )
+      ];
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -126,45 +232,10 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
         ));
       }
 
-      // 画像問題を固定で追加
-      selectedProblems.add(Problem(
-        id: 'image_problem_1',
-        title: '画像の中の特定のオブジェクトを見つけてください',
-        description: '画像問題',
-        category: ProblemCategory.memory,
-        difficulty: 2,
-        type: '画像問題',
-      ));
-
       _dailyProblems = Future.value(selectedProblems);
     } else {
-      // デフォルトのモックテスト
-      _dailyProblems = Future.value([
-        Problem(
-          id: '1',
-          title: '1週間前の出来事を思い出せますか？',
-          description: '通常問題',
-          category: ProblemCategory.memory,
-          difficulty: 2,
-          type: '通常問題',
-        ),
-        Problem(
-          id: '2',
-          title: '子供の頃の思い出を音声で話してください',
-          description: 'あなたの子供の頃の一番楽しかった思い出を話してください。',
-          category: ProblemCategory.language,
-          difficulty: 2,
-          type: '音声問題',
-        ),
-        Problem(
-          id: 'image_problem_1',
-          title: '画像の中の特定のオブジェクトを見つけてください',
-          description: '画像問題',
-          category: ProblemCategory.memory,
-          difficulty: 2,
-          type: '画像問題',
-        )
-      ]);
+      // ローカルストレージから問題を読み込む
+      _dailyProblems = _loadProblemsFromLocalStorage();
     }
 
     // モックデータを使用
@@ -214,13 +285,13 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _buildProblemListSection(context),
+                const SizedBox(height: 16),
                 _buildTodaysScoreSection(context),
                 const SizedBox(height: 16),
                 _buildPerformanceChartSection(context),
                 const SizedBox(height: 16),
                 _buildCategoryPerformanceSection(context),
-                const SizedBox(height: 16),
-                _buildProblemListSection(context),
               ],
             ),
           ),
@@ -488,10 +559,10 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: _getProblemBackgroundColor(problem.description),
+                        color: _getProblemBackgroundColor(problem),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: _getProblemBorderColor(problem.description),
+                          color: _getProblemBorderColor(problem),
                           width: 1.5,
                         ),
                       ),
@@ -501,11 +572,11 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: _getProblemBorderColor(problem.description),
+                            color: _getProblemBorderColor(problem),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            _getProblemIcon(problem.description),
+                            _getProblemIcon(problem),
                             color: Colors.white,
                             size: 24,
                           ),
@@ -529,15 +600,14 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: _getProblemBorderColor(problem.description)
+                            color: _getProblemBorderColor(problem)
                                 .withOpacity(0.2),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             _getDifficultyText(problem.difficulty),
                             style: TextStyle(
-                              color:
-                                  _getProblemBorderColor(problem.description),
+                              color: _getProblemBorderColor(problem),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -564,6 +634,9 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
       case ProblemCategory.memory:
         if (problem.description == '画像問題') {
           Get.to(() => ImageRecognitionProblemScreen(problem: problem));
+        } else if (problem.type == '音声問題') {
+          // 音声問題の場合は必ずLanguageProblemScreenに遷移
+          Get.to(() => LanguageProblemScreen(problem: problem));
         } else {
           // 通常の記憶問題
           Get.to(() => ProblemSolveScreen(problem: problem));
@@ -610,8 +683,8 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
   }
 
   // 問題の種類に応じた背景色を取得
-  Color _getProblemBackgroundColor(String type) {
-    switch (type) {
+  Color _getProblemBackgroundColor(Problem problem) {
+    switch (problem.type) {
       case '通常問題':
         return Colors.blue.shade50;
       case '音声問題':
@@ -624,8 +697,8 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
   }
 
   // 問題の種類に応じたボーダーカラーを取得
-  Color _getProblemBorderColor(String type) {
-    switch (type) {
+  Color _getProblemBorderColor(Problem problem) {
+    switch (problem.type) {
       case '通常問題':
         return Colors.blue.shade200;
       case '音声問題':
@@ -638,8 +711,8 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
   }
 
   // 問題の種類に応じたアイコンを取得
-  IconData _getProblemIcon(String type) {
-    switch (type) {
+  IconData _getProblemIcon(Problem problem) {
+    switch (problem.type) {
       case '通常問題':
         return Icons.text_fields;
       case '音声問題':
