@@ -66,34 +66,6 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
       ]
     },
     {
-      'question': '今から数字が出るので逆の順番で回答してください',
-      'type': 'reverse_number_memory',
-      'memorizedWords': ['6', '8', '2', '9'],
-      'timeLimit': 30,
-      'multipleChoiceQuestions': [
-        {
-          'question': '最初の数字は何でしたか？',
-          'options': ['2', '6', '8', '9'],
-          'correctAnswer': '9'
-        },
-        {
-          'question': '2番目の数字は何でしたか？',
-          'options': ['6', '8', '2', '9'],
-          'correctAnswer': '2'
-        },
-        {
-          'question': '3番目の数字は何でしたか？',
-          'options': ['6', '8', '2', '9'],
-          'correctAnswer': '8'
-        },
-        {
-          'question': '最後の数字は何でしたか？',
-          'options': ['2', '6', '8', '9'],
-          'correctAnswer': '6'
-        }
-      ]
-    },
-    {
       'question': '100から7を順番に引いてください。最初の数字を選んでください。',
       'type': 'math_stage1',
       'timeLimit': 30,
@@ -109,7 +81,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
     },
     {
       'question': '先ほど覚えた単語を再度回答してください',
-      'type': 'memory_stage1',
+      'type': 'memory_stage2',
       'memorizedWords': ['桜', '猫', '電車'],
       'timeLimit': 30,
       'multipleChoiceQuestions': [
@@ -162,6 +134,14 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
       'type': 'vegetable_list',
       'timeLimit': 30,
       'options': null,
+    },
+    {
+      'question': '以下の動物の中で、哺乳類はどれですか？',
+      'type': 'animal_classification',
+      'timeLimit': 30,
+      'options': ['カエル', '鳥', '犬', '魚'],
+      'correctAnswer': '犬',
+      'explanation': '犬は哺乳類で、体毛があり、肺で呼吸し、子供に母乳を与える特徴を持っています。'
     },
   ];
 
@@ -632,6 +612,69 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
           timeLimit: _questions[_currentQuestionIndex]['timeLimit'],
         );
 
+      case 'animal_classification':
+        return Column(
+          children: [
+            Text(
+              question['question'],
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: question['options']
+                  .map<Widget>((option) => ElevatedButton(
+                        onPressed: () => _nextQuestion(option),
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.blue[600],
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 3,
+                        ),
+                        child: Text(
+                          option,
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ))
+                  .toList(),
+            ),
+          ],
+        );
+
+      case 'memory_stage2':
+        return _MemoryTestWidget(
+          memorizedWords: question['memorizedWords'] ?? [],
+          multipleChoiceQuestions: question['multipleChoiceQuestions'] ?? [],
+          onSubmit: _nextQuestion,
+          initialStage: 2, // 直接選択画面に移行
+          onSelectionScreenReady: () {
+            // タイマーを自動開始
+            _remainingTime = question['timeLimit'];
+            _timerAnimationController.reset();
+            _timerAnimationController.forward();
+
+            _questionTimer?.cancel();
+            _questionTimer =
+                Timer.periodic(const Duration(seconds: 1), (timer) {
+              setState(() {
+                _remainingTime--;
+              });
+
+              if (_remainingTime <= 0) {
+                _questionTimer?.cancel();
+                _nextQuestion(null);
+              }
+            });
+          },
+        );
+
       default:
         return Column(
           children: [
@@ -953,6 +996,27 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
           final List<String> vegetables = answer.split(',');
           // 野菜の数を点数として加算
           _score += vegetables.length;
+        } catch (e) {}
+        break;
+      case 'animal_classification':
+        if (answer == _questions[_currentQuestionIndex]['correctAnswer']) {
+          _score++;
+        }
+        break;
+      case 'memory_stage2':
+        try {
+          // 回答を解析
+          final selectedAnswers = answer.split('|');
+          final multipleChoiceQuestions =
+              _questions[_currentQuestionIndex]['multipleChoiceQuestions'];
+
+          // 各多肢選択問題で正解を選んだら1点
+          for (var i = 0; i < multipleChoiceQuestions.length; i++) {
+            if (selectedAnswers[i] ==
+                multipleChoiceQuestions[i]['correctAnswer']) {
+              _score++;
+            }
+          }
         } catch (e) {}
         break;
       // 他の質問タイプの採点ロジック
