@@ -93,7 +93,6 @@ JSONフォーマット例：
         explanation: parsedResponse['explanation'] ?? '回答への真摯な取り組みを評価します。',
       );
     } catch (e) {
-      print('回答評価エラー: $e');
       return AnswerEvaluation(
         isCorrect: false,
         result: '評価に少し時間がかかりました',
@@ -141,15 +140,12 @@ JSONフォーマット例：
             }
           }
         } catch (parseError) {
-          print('JSON解析中のエラー: $parseError');
           continue;
         }
       }
 
-      print('有効なJSONが見つかりませんでした。元のレスポンス: $response');
       return {};
     } catch (e) {
-      print('JSON抽出中にエラーが発生しました: $e');
       return {};
     }
   }

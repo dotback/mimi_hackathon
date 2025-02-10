@@ -15,9 +15,6 @@ class ProfileService {
       );
 
       if (response.statusCode == 200) {
-        // レスポンスの内容をデバッグ出力
-        print('APIレスポンス: ${response.body}');
-
         // APIレスポンスをパース
         final Map<String, dynamic> data = json.decode(response.body);
 
@@ -35,12 +32,9 @@ class ProfileService {
           email: _extractValue(data, ['email'], 'guest@example.com'),
         );
       } else {
-        // エラーレスポンスの詳細を出力
-        print('エラーレスポンス: ${response.statusCode} - ${response.body}');
         throw Exception('プロフィール情報の取得に失敗しました: ${response.statusCode}');
       }
     } catch (e) {
-      print('フェッチ中のエラー: $e');
       rethrow;
     }
   }
@@ -75,7 +69,6 @@ class ProfileService {
     try {
       return DateTime.parse(birthDateString);
     } catch (e) {
-      print('生年月日のパースに失敗: $e');
       return DateTime.now();
     }
   }
@@ -95,7 +88,6 @@ class ProfileService {
 
       return age;
     } catch (e) {
-      print('年齢計算エラー: $e');
       return 0;
     }
   }

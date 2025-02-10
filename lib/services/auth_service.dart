@@ -44,7 +44,6 @@ class AuthService extends GetxController {
 
       return result.user;
     } on FirebaseAuthException catch (e) {
-      print('ログインエラー: ${e.message}');
       return null;
     }
   }
@@ -54,7 +53,7 @@ class AuthService extends GetxController {
     try {
       await FirebaseAuth.instance.signOut();
     } catch (e) {
-      print('ログアウトエラー: $e');
+      // エラーハンドリング
     }
   }
 

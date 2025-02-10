@@ -216,7 +216,6 @@ class _LanguageProblemScreenState extends State<LanguageProblemScreen>
     try {
       // すでに評価中の場合は処理を中断
       if (_isEvaluationInProgress) {
-        print('評価プロセスは既に進行中です');
         return;
       }
 
@@ -280,8 +279,6 @@ class _LanguageProblemScreenState extends State<LanguageProblemScreen>
                 } else {
                   _recognizedText += ' ' + partialText;
                 }
-
-                print('部分的な認識テキスト: $_recognizedText');
               });
             }
           });
@@ -305,8 +302,6 @@ class _LanguageProblemScreenState extends State<LanguageProblemScreen>
 
       // 認識されたテキストを保存
       _recognizedText = recognizedText;
-      developer.log('認識されたテキストを設定: $_recognizedText',
-          name: 'SpeechRecognition');
 
       // 回答の正誤判定を実施（音声認識の最後のみで実行）
       try {
@@ -348,11 +343,6 @@ class _LanguageProblemScreenState extends State<LanguageProblemScreen>
     if (_evaluation != null) return;
 
     try {
-      // デバッグログを追加
-      print('_validateAnswer() メソッド開始');
-      print('認識されたテキスト: $_recognizedText');
-      print('現在の認識テキスト: $_currentRecognizedText');
-
       // 空の回答を防ぐ
       String finalText =
           _recognizedText.isNotEmpty ? _recognizedText : _currentRecognizedText;
@@ -367,13 +357,9 @@ class _LanguageProblemScreenState extends State<LanguageProblemScreen>
             : _currentRecognizedText;
 
         if (finalText.trim().isEmpty) {
-          print('音声認識が完了していません。再試行します。');
           return;
         }
       }
-
-      // デバッグログを追加
-      print('最終的に使用するテキスト: $finalText');
 
       // 解析中フラグをセット
       setState(() {
@@ -397,15 +383,7 @@ class _LanguageProblemScreenState extends State<LanguageProblemScreen>
         },
       );
 
-      // デバッグログを追加
-      print('評価結果の詳細:');
-      print('isCorrect: ${evaluation.isCorrect}');
-      print('result: ${evaluation.result}');
-      print('improvements: ${evaluation.improvements}');
-      print('explanation: ${evaluation.explanation}');
-
       if (!mounted) {
-        print('ウィジェットがマウントされていません');
         return;
       }
 
@@ -419,17 +397,10 @@ class _LanguageProblemScreenState extends State<LanguageProblemScreen>
 
             // 最終的な回答テキストを正確に設定
             _evaluation = evaluation.copyWith(userAnswer: finalText);
-
-            // デバッグ用のprint
-            print('状態更新完了');
-            print('_evaluation: $_evaluation');
           });
-        } else {
-          print('マウント後のコールバックでもウィジェットがマウントされていません');
         }
       });
     } catch (e, stackTrace) {
-      print('_validateAnswer() エラー発生');
       developer.log(
         '回答検証エラー',
         error: e,
@@ -543,20 +514,12 @@ class _LanguageProblemScreenState extends State<LanguageProblemScreen>
   }
 
   Widget _getCurrentSection() {
-    print('_getCurrentSection() 呼び出し');
-    print('_isAISpeaking: $_isAISpeaking');
-    print('_isListening: $_isListening');
-    print('_isAnalyzing: $_isAnalyzing');
-    print('_evaluation: $_evaluation');
-
     if (_isAISpeaking) return _buildAISpeakingSection();
     if (_isListening) return _buildListeningSection();
     if (_isAnalyzing) return _buildAnalyzingSection();
     if (_evaluation != null) {
-      print('結果セクションを表示');
       return _buildResultSection();
     }
-    print('空のセクションを表示');
     return SizedBox.shrink();
   }
 
@@ -726,7 +689,6 @@ class _LanguageProblemScreenState extends State<LanguageProblemScreen>
   Widget _buildResultSection() {
     // _evaluationがnullでないことを再確認
     if (_evaluation == null) {
-      print('_evaluationがnullです。結果セクションを表示できません。');
       return SizedBox.shrink();
     }
 

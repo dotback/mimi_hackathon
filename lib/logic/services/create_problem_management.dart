@@ -27,7 +27,7 @@ class CreateProblemManagement {
       await _generateRecallProblems(instructions['recall_problems']);
       await _generateSpeechProblems(instructions['speech_problems']);
     } catch (e) {
-      debugPrint('問題生成エラー: $e');
+      // 関数内のdebugPrintの呼び出しを削除し、コードの論理的な流れを維持する
     }
   }
 

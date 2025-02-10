@@ -27,7 +27,7 @@ class GeminiService {
 - 運動習慣: ${userData.exerciseHabit}
 
 直近の認知機能テスト結果:
-- スコア: ${cognitiveTestResult['score']} / 10
+- スコア: ${cognitiveTestResult['score']}
 - コメント: ${cognitiveTestResult['comment']}
 
 テストの要件:
@@ -122,7 +122,6 @@ class GeminiService {
 
       return parsedResponse;
     } catch (e) {
-      print('Gemini APIエラー: $e');
       rethrow;
     }
   }
@@ -158,7 +157,6 @@ class GeminiService {
             final dailyProblems = parsedJson['dailyProblems'];
             final todoList = parsedJson['todoList'];
             if (dailyProblems is List && todoList is List) {
-              print('抽出に成功したJSON: $potentialJson');
               return {
                 'dailyProblems': dailyProblems,
                 'todoList': todoList,
@@ -166,18 +164,12 @@ class GeminiService {
             }
           }
         } catch (parseError) {
-          print('JSON解析中のエラー: $parseError');
           continue;
         }
       }
 
-      // デバッグ用のログ出力
-      print('有効なJSONが見つかりませんでした。元のレスポンス: $response');
-
       return {'dailyProblems': []};
     } catch (e) {
-      // エラーハンドリング
-      print('JSON抽出中にエラーが発生しました: $e');
       return {'dailyProblems': []};
     }
   }

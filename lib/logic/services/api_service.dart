@@ -28,7 +28,6 @@ class ApiService {
       );
       return response.statusCode == 200;
     } catch (e) {
-      print('ネットワーク接続エラー: $e');
       return false;
     }
   }
@@ -39,7 +38,6 @@ class ApiService {
       // ネットワーク接続を確認
       final hasConnection = await checkNetworkConnection();
       if (!hasConnection) {
-        print('ネットワーク接続がありません');
         return createDefaultUser();
       }
 
@@ -54,7 +52,6 @@ class ApiService {
       ).timeout(
         const Duration(seconds: 10),
         onTimeout: () {
-          print('APIリクエストがタイムアウトしました');
           return http.Response('Timeout', 408);
         },
       );
@@ -63,13 +60,11 @@ class ApiService {
         final Map<String, dynamic> userData = json.decode(response.body);
         return User.fromJson(userData);
       } else {
-        print('ユーザープロファイル取得エラー: ${response.statusCode}');
         // エラー時にデフォルトユーザーを返す
         return createDefaultUser();
       }
     } catch (e) {
       // 例外発生時にデフォルトユーザーを返す
-      print('ユーザープロファイル取得の例外: $e');
       return createDefaultUser();
     }
   }

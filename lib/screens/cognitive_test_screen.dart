@@ -349,13 +349,13 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
   }
 
   String _getResultInterpretation() {
-    if (_score >= 8) {
+    if (_score >= 10) {
       return '認知機能は正常範囲内です。';
-    } else if (_score >= 6) {
+    } else if (_score >= 8) {
       return '軽度の認知機能低下が疑われます。\n医療専門家に相談することをお勧めします。';
-    } else if (_score >= 4) {
+    } else if (_score >= 6) {
       return '中等度の認知機能低下が疑われます。\n早めに医療専門家に相談してください。';
-    } else if (_score >= 2) {
+    } else if (_score >= 4) {
       return '高度の認知機能低下が疑われます。\n至急、医療専門家に相談してください。';
     } else {
       return '非常に高度の認知機能低下が疑われます。\n直ちに医療専門家に相談してください。';
@@ -841,9 +841,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
               _score++;
             }
           }
-        } catch (e) {
-          print('逆数字メモリーテストの検証中にエラーが発生しました: $e');
-        }
+        } catch (e) {}
         break;
 
       case 'math_stage1':
@@ -879,9 +877,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
               _score++;
             }
           }
-        } catch (e) {
-          print('メモリーテストの検証中にエラーが発生しました: $e');
-        }
+        } catch (e) {}
         break;
 
       case 'location_description':
@@ -906,9 +902,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
             if (parts[2] == correctDate['day']) _score++;
             if (parts[3] == correctDate['weekday']) _score++;
           }
-        } catch (e) {
-          print('日付の検証中にエラーが発生しました: $e');
-        }
+        } catch (e) {}
         break;
 
       case 'age':
@@ -922,10 +916,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
           if ((userAge - answeredAge).abs() <= 2) {
             _score++;
           }
-        } catch (e) {
-          // 年齢の取得や比較に失敗した場合は0点
-          print('年齢の検証中にエラーが発生しました: $e');
-        }
+        } catch (e) {}
         break;
 
       case 'date':
@@ -954,9 +945,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
               _score++;
             }
           }
-        } catch (e) {
-          print('画像メモリーテストの検証中にエラーが発生しました: $e');
-        }
+        } catch (e) {}
         break;
       case 'vegetable_list':
         try {
@@ -964,9 +953,7 @@ class _CognitiveTestScreenState extends State<CognitiveTestScreen>
           final List<String> vegetables = answer.split(',');
           // 野菜の数を点数として加算
           _score += vegetables.length;
-        } catch (e) {
-          print('野菜リストの検証中にエラーが発生しました: $e');
-        }
+        } catch (e) {}
         break;
       // 他の質問タイプの採点ロジック
     }

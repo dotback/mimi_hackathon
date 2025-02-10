@@ -113,7 +113,6 @@ class SignUpController extends GetxController {
       User? user = await _authService.signUp(email, password);
       return user != null;
     } catch (e) {
-      print('ユーザー登録エラー: $e');
       return false;
     }
   }
@@ -122,69 +121,38 @@ class SignUpController extends GetxController {
     try {
       // メールアドレスとパスワードのバリデーション
       if (email.isEmpty || password.isEmpty) {
-        print('エラー: メールアドレスまたはパスワードが空です');
         return false;
       }
-
-      // デバッグログ
-      print('ログイン試行: $email');
-      print('パスワード長: ${password.length}');
 
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
 
-      // ログイン成功時の詳細ログ
-      print('ログイン成功: ${userCredential.user?.uid}');
-      print('ユーザーメール: ${userCredential.user?.email}');
-
       return userCredential.user != null;
     } on FirebaseAuthException catch (e) {
-      // 詳細なエラーログ
-      print('FirebaseAuthエラー: ${e.code}');
-      print('エラーメッセージ: ${e.message}');
-
       // エラーコードに基づいたより詳細なエラーハンドリング
       switch (e.code) {
         case 'user-not-found':
-          print('ユーザーが見つかりません');
           break;
         case 'wrong-password':
-          print('パスワードが間違っています');
           break;
         case 'invalid-email':
-          print('メールアドレスの形式が無効です');
           break;
         default:
-          print('その他の認証エラー');
       }
 
       return false;
     } catch (e) {
-      // 予期せぬエラーのログ
-      print('予期せぬエラー: $e');
       return false;
     }
   }
 
   Future<void> postSignUpDetails() async {
     // TODO: implement post sign up details
-    print("User Type: $_userType");
-    print("Email: $_email");
-    print("Password: $_password");
-    print("Mobile Number: $_mobileNumber");
-    print("Name: $_name");
-    print("College Name: $_collegeName");
-    print("Admission Year: $_admissionYear");
-    print("Passout Year: $_passOutYear");
-    print("Image File: $_imageFile");
-    print("Resume File: $_resumeFile");
   }
 
   SignUpController();
 
   void signUp() {
-    if (kDebugMode) {
-      print('サインアップ処理');
-    }
+    if (kDebugMode) {}
   }
 }

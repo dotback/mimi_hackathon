@@ -33,10 +33,6 @@ class ImageRecognitionService {
       画像の特徴を詳細に観察し、認知機能を刺激する問題を作成してください。
       ''';
 
-      // プロンプトをコンソールに詳細表示
-      debugPrint('===== Gemini API プロンプト =====');
-      debugPrint('画像パス: $imagePath');
-
       final content = [
         Content.multi([
           TextPart(prompt),
@@ -48,34 +44,20 @@ class ImageRecognitionService {
       final response = await _generativeModel.generateContent(content).timeout(
         Duration(seconds: 60),
         onTimeout: () {
-          debugPrint('Gemini APIリクエストがタイムアウトしました');
           throw TimeoutException('Gemini APIのレスポンスがタイムアウトしました');
         },
       );
 
       // レスポンスからJSONを抽出
       final responseText = response.text ?? '';
-      debugPrint('===== Gemini API レスポンス =====');
-      debugPrint('完全なAPIレスポンス: $responseText');
 
       final jsonString = _extractJsonFromResponse(responseText);
-      debugPrint('抽出したJSONレスポンス: $jsonString');
 
       // JSONパースのエラーハンドリングを強化
       Map<String, dynamic> jsonMap;
       try {
         jsonMap = json.decode(jsonString);
-
-        // パースされたJSONをコンソールに表示
-        debugPrint('===== パースされたJSON =====');
-        debugPrint('problem: ${jsonMap['problem']}');
-        debugPrint('correctAnswer: ${jsonMap['correctAnswer']}');
-        debugPrint('hints: ${jsonMap['hints']}');
-        debugPrint('improvements: ${jsonMap['improvements']}');
       } catch (e) {
-        debugPrint('JSONパースエラー: $e');
-        debugPrint('パース失敗したJSON文字列: $jsonString');
-
         return {
           'problem': '問題の生成中にエラーが発生しました',
           'correctAnswer': 'エラー',
@@ -91,10 +73,6 @@ class ImageRecognitionService {
         'improvements': jsonMap['improvements'] ?? '特に改善点はありません',
       };
     } catch (e, stackTrace) {
-      debugPrint('===== エラー発生 =====');
-      debugPrint('画像問題生成エラー: $e');
-      debugPrint('スタックトレース: $stackTrace');
-
       return {
         'problem': '問題の生成中にエラーが発生しました',
         'correctAnswer': 'エラー',
@@ -147,11 +125,6 @@ class ImageRecognitionService {
       優しく、温かく、励ましの気持ちを込めて評価してください。
       ''';
 
-      // プロンプトをコンソールに詳細表示
-      debugPrint('===== Gemini API プロンプト =====');
-      debugPrint('問題: $problem');
-      debugPrint('ユーザーの回答: $userAnswer');
-
       final content = [
         Content.multi([
           TextPart(prompt),
@@ -163,34 +136,20 @@ class ImageRecognitionService {
       final response = await _generativeModel.generateContent(content).timeout(
         Duration(seconds: 60),
         onTimeout: () {
-          debugPrint('Gemini APIリクエストがタイムアウトしました');
           throw TimeoutException('Gemini APIのレスポンスがタイムアウトしました');
         },
       );
 
       // レスポンスからJSONを抽出
       final responseText = response.text ?? '';
-      debugPrint('===== Gemini API レスポンス =====');
-      debugPrint('完全なAPIレスポンス: $responseText');
 
       final jsonString = _extractJsonFromResponse(responseText);
-      debugPrint('抽出したJSONレスポンス: $jsonString');
 
       // JSONパースのエラーハンドリングを強化
       Map<String, dynamic> jsonMap;
       try {
         jsonMap = json.decode(jsonString);
-
-        // パースされたJSONをコンソールに表示
-        debugPrint('===== パースされたJSON =====');
-        debugPrint('isCorrect: ${jsonMap['isCorrect']}');
-        debugPrint('result: ${jsonMap['result']}');
-        debugPrint('improvements: ${jsonMap['improvements']}');
-        debugPrint('explanation: ${jsonMap['explanation']}');
       } catch (e) {
-        debugPrint('JSONパースエラー: $e');
-        debugPrint('パース失敗したJSON文字列: $jsonString');
-
         return {
           'isCorrect': false,
           'userAnswer': userAnswer,
@@ -208,10 +167,6 @@ class ImageRecognitionService {
         'explanation': jsonMap['explanation'] ?? '回答の分析ができませんでした',
       };
     } catch (e, stackTrace) {
-      debugPrint('===== エラー発生 =====');
-      debugPrint('回答評価エラー: $e');
-      debugPrint('スタックトレース: $stackTrace');
-
       return {
         'isCorrect': false,
         'userAnswer': userAnswer,
@@ -253,22 +208,15 @@ class ImageRecognitionService {
               (parsedJson.containsKey('problem') ||
                   parsedJson.containsKey('correctAnswer') ||
                   parsedJson.containsKey('isCorrect'))) {
-            debugPrint('抽出に成功したJSON: $potentialJson');
             return potentialJson;
           }
         } catch (parseError) {
-          debugPrint('JSON解析中のエラー: $parseError');
           continue;
         }
       }
 
-      // デバッグ用のログ出力
-      debugPrint('有効なJSONが見つかりませんでした。元のレスポンス: $response');
-
       return '{}';
     } catch (e) {
-      // エラーハンドリング
-      debugPrint('JSON抽出中にエラーが発生しました: $e');
       return '{}';
     }
   }

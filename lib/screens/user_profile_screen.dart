@@ -74,16 +74,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   _saveProfile() async {
     // デバッグ用のprint文を追加
-    print('_saveProfile method called');
-
-    // フォームキーを使用してバリデーションを行う
     if (_formKey.currentState == null) {
-      print('Form key is null');
       return;
     }
 
     if (!_formKey.currentState!.validate()) {
-      print('Form validation failed');
       return;
     }
 
@@ -116,8 +111,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       await prefs.setString('sleepHabit', _sleepHabit ?? '6-8時間');
       await prefs.setString('sleepHours', user.sleepHours.toString());
 
-      print('Profile saved successfully');
-
       // プロフィールを再読み込み
       await _fetchUserProfile();
 
@@ -136,8 +129,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         ),
       );
     } catch (e) {
-      print('Error saving profile: $e');
-
       // エラー時のダイアログ
       await showDialog(
         context: context,
