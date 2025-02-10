@@ -50,7 +50,7 @@ class SignUpBodyScreen extends StatelessWidget {
                         child: Container(
                           decoration: BoxDecoration(
                             color: HexColor("#ffffff"),
-                            borderRadius: BorderRadius.only(
+                            borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(50),
                               topRight: Radius.circular(50),
                             ),
@@ -59,7 +59,7 @@ class SignUpBodyScreen extends StatelessWidget {
                                 color: Colors.grey.withOpacity(0.3),
                                 spreadRadius: 3,
                                 blurRadius: 10,
-                                offset: Offset(0, -3),
+                                offset: const Offset(0, -3),
                               ),
                             ],
                           ),

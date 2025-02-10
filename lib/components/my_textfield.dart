@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hexcolor/hexcolor.dart';
 
@@ -9,6 +10,7 @@ class MyTextField extends StatelessWidget {
   final Icon? prefixIcon;
   final void Function(String)? onChanged;
   final TextInputType? keyboardType;
+  final List<FilteringTextInputFormatter>? inputFormatters;
 
   const MyTextField({
     super.key,
@@ -18,6 +20,7 @@ class MyTextField extends StatelessWidget {
     this.prefixIcon,
     this.onChanged,
     this.keyboardType,
+    this.inputFormatters,
   });
 
   @override
@@ -27,6 +30,7 @@ class MyTextField extends StatelessWidget {
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         prefixIcon: prefixIcon,
         hintText: hintText,

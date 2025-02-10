@@ -19,4 +19,15 @@ class Validators {
     }
     return null;
   }
+
+  static String? validateUsername(String? username) {
+    if (username == null || username.isEmpty) {
+      return 'ユーザー名を入力してください';
+    }
+
+    if (username.length < 4) {
+      return 'ユーザー名は4文字以上である必要があります';
+    }
+    return null;
+  }
 }

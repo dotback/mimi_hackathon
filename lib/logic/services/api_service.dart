@@ -1,22 +1,35 @@
+import 'package:get/get.dart';
+import 'package:mimi/env.dart';
+import 'package:mimi/signup/controller/auth_token_controller.dart';
+
 import '../../data/models/user.dart';
 import '../../data/models/program.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'https://your-api-endpoint.com/api';
+  static final String baseUrl = Env.apiUrl;
 
   // デフォルトユーザーを作成するメソッドを追加
-  User createDefaultUser() {
-    return User(
-      name: 'ゲストユーザー',
-      gender: '未設定',
-      age: 30,
-      birthday: DateTime(1990, 1, 1),
-      exerciseHabit: '週3回',
-      sleepHours: 7.0,
-      email: 'guest@example.com',
+  Future<void> createUser(User user) async {
+    final token = Get.find<AuthTokenController>().token;
+    if (token.isEmpty) {
+      throw Exception('認証トークンが見つかりません');
+    }
+    final response = await http.post(
+      Uri.parse('$baseUrl/users'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        ...user.toJson(),
+        'prefecture': 'Tokyo',
+      }),
     );
+    if (response.statusCode >= 400) {
+      throw Exception('ユーザー登録に失敗しました ${response.body}');
+    }
   }
 
   // ネットワーク接続を確認
@@ -34,28 +47,24 @@ class ApiService {
   }
 
   // ユーザープロファイルを取得
-  Future<User> fetchUserProfile(String userId) async {
+  Future<User> fetchUserProfile() async {
     try {
-      // ネットワーク接続を確認
-      final hasConnection = await checkNetworkConnection();
-      if (!hasConnection) {
-        print('ネットワーク接続がありません');
-        return createDefaultUser();
+      final controller = Get.find<AuthTokenController>();
+      // トークンが空の場合、取得を試みる
+      if (controller.token.isEmpty) {
+        await controller.refreshToken();
       }
 
-      // 本番環境では実際のAPIエンドポイントを使用
-      if (userId == 'dummy_user_id') {
-        return createDefaultUser();
+      final token = controller.token;
+      if (token.isEmpty) {
+        throw Exception('認証トークンが見つかりません');
       }
 
       final response = await http.get(
-        Uri.parse('https://api.example.com/users/$userId'),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          print('APIリクエストがタイムアウトしました');
-          return http.Response('Timeout', 408);
+        Uri.parse('$baseUrl/users'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
         },
       );
 
@@ -64,29 +73,28 @@ class ApiService {
         return User.fromJson(userData);
       } else {
         print('ユーザープロファイル取得エラー: ${response.statusCode}');
-        // エラー時にデフォルトユーザーを返す
-        return createDefaultUser();
+        return User.createDefaultUser();
       }
     } catch (e) {
-      // 例外発生時にデフォルトユーザーを返す
       print('ユーザープロファイル取得の例外: $e');
-      return createDefaultUser();
+      return User.createDefaultUser();
     }
   }
 
   // ユーザープロファイルを更新
-  Future<User> updateUserProfile(User user) async {
+  Future<void> updateUserProfile(UpdateUser user) async {
+    final token = Get.find<AuthTokenController>().token;
     try {
-      final response = await http.put(
-        Uri.parse('https://api.example.com/users/${user.email}'),
-        headers: {'Content-Type': 'application/json'},
+      final response = await http.patch(
+        Uri.parse('$baseUrl/users'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
+        },
         body: json.encode(user.toJson()),
       );
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> updatedUserData = json.decode(response.body);
-        return User.fromJson(updatedUserData);
-      } else {
+      if (response.statusCode != 204) {
         throw Exception('Failed to update user profile');
       }
     } catch (e) {

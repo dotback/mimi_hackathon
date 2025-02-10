@@ -40,6 +40,15 @@ class DefaultFirebaseOptions {
     }
   }
 
+  static const FirebaseOptions localEmu = FirebaseOptions(
+    apiKey: 'demo-api-key',
+    appId: 'demo-app-id',
+    messagingSenderId: 'demo-sender-id',
+    projectId: 'demo-project',
+    authDomain: 'localhost:9099',
+    storageBucket: 'demo-project.appspot.com',
+  );
+
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyBc6Rhg8kdyAZFCOyBJHPAmKHTD3lMuY-I',
     appId: '1:36692564230:web:71f234665092ad6f64e687',
@@ -85,5 +94,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'sixth-arbor-448303-i3.firebasestorage.app',
     measurementId: 'G-6ZVYRHV102',
   );
-
 }

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hexcolor/hexcolor.dart';
+import 'package:mimi/constants/profile_selection.dart';
+import 'package:mimi/data/models/user.dart';
 import '../../components/my_button.dart';
 import '../../signup/controller/flow_controller.dart';
 import '../../signup/controller/sign_up_controller.dart';
@@ -20,19 +23,16 @@ class _SignUpTwoState extends State<SignUpTwo> {
   final usernameController = TextEditingController();
   final birthdateController = TextEditingController();
   final ageController = TextEditingController();
+  final sleepHoursController = TextEditingController();
 
   String? selectedGender;
   String? selectedExerciseHabit;
-  String? selectedSleepHabit;
+  int? selectedYear;
+  int? selectedMonth;
+  int? selectedDay;
 
   final List<String> genderOptions = ['男性', '女性', 'その他'];
-  final List<String> exerciseHabitOptions = [
-    '週に1-2回',
-    '週に3-4回',
-    '週に5回以上',
-    'ほとんどしない'
-  ];
-  final List<String> sleepHabitOptions = ['6時間未満', '6-7時間', '7-8時間', '8時間以上'];
+  final List<String> exerciseHabitOptions = exerciseHabits;
 
   SignUpController signUpController = Get.find<SignUpController>();
   FlowController flowController = Get.find<FlowController>();
@@ -51,8 +51,11 @@ class _SignUpTwoState extends State<SignUpTwo> {
               MyTextField(
                 controller: usernameController,
                 hintText: 'ユーザー名を入力',
+                inputFormatters: [],
                 onChanged: (String value) {
-                  signUpController.setName(value);
+                  if (value.length >= 4) {
+                    signUpController.setName(value);
+                  }
                 },
                 obscureText: false,
               ),
@@ -106,17 +109,20 @@ class _SignUpTwoState extends State<SignUpTwo> {
 
               // 睡眠習慣
               _buildSectionTitle('睡眠習慣'),
-              _buildDropdown(
-                value: selectedSleepHabit,
-                items: sleepHabitOptions,
-                onChanged: (value) {
-                  setState(() {
-                    selectedSleepHabit = value;
-                  });
+              MyTextField(
+                controller: sleepHoursController,
+                hintText: '7.5',
+                obscureText: false,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(
+                      RegExp(r'^\d{1,2}(\.|(\.\d))?$')),
+                ],
+                onChanged: (String value) {
+                  signUpController.setSleepHours(double.tryParse(value) ?? 0.0);
                 },
-                hint: '睡眠習慣を選択',
               ),
-
               const SizedBox(height: 20),
               MyButton(
                 buttonText: '登録',
@@ -127,16 +133,25 @@ class _SignUpTwoState extends State<SignUpTwo> {
                     signUpController.setAdditionalUserInfo(
                       username: usernameController.value.text,
                       gender: selectedGender!,
-                      birthdate: birthdateController.value.text,
+                      birthDate: birthdateController.value.text,
                       age: int.parse(ageController.value.text),
                       exerciseHabit: selectedExerciseHabit!,
-                      sleepHabit: selectedSleepHabit!,
                     );
 
                     // ユーザー登録を実行
                     bool isRegistered = await signUpController.registerUser(
                       signUpController.email.toString(),
                       signUpController.password.toString(),
+                      User(
+                        username: signUpController.username.toString(),
+                        gender: signUpController.gender.toString(),
+                        age: signUpController.age ?? 0,
+                        birthDate: signUpController.birthDate,
+                        exerciseHabit:
+                            signUpController.exerciseHabit.toString(),
+                        sleepHours: signUpController.sleepHours ?? 0.0,
+                        email: signUpController.email.toString(),
+                      ),
                     );
 
                     if (isRegistered) {
@@ -171,10 +186,6 @@ class _SignUpTwoState extends State<SignUpTwo> {
     }
     if (selectedExerciseHabit == null) {
       Get.snackbar("エラー", "運動習慣を選択してください");
-      return false;
-    }
-    if (selectedSleepHabit == null) {
-      Get.snackbar("エラー", "睡眠習慣を選択してください");
       return false;
     }
     return true;
@@ -235,7 +246,7 @@ class _SignUpTwoState extends State<SignUpTwo> {
         labelText: '年',
         border: OutlineInputBorder(),
       ),
-      value: null,
+      value: selectedYear,
       hint: Text('年'),
       items: years.map((year) {
         return DropdownMenuItem(
@@ -245,6 +256,8 @@ class _SignUpTwoState extends State<SignUpTwo> {
       }).toList(),
       onChanged: (selectedYear) {
         setState(() {
+          this.selectedYear = selectedYear;
+          _updateBirthdateController();
           // 年齢自動計算
           ageController.text = (DateTime.now().year - selectedYear!).toString();
         });
@@ -258,7 +271,7 @@ class _SignUpTwoState extends State<SignUpTwo> {
         labelText: '月',
         border: OutlineInputBorder(),
       ),
-      value: null,
+      value: selectedMonth,
       hint: Text('月'),
       items: List.generate(12, (index) {
         return DropdownMenuItem(
@@ -267,7 +280,10 @@ class _SignUpTwoState extends State<SignUpTwo> {
         );
       }),
       onChanged: (selectedMonth) {
-        // 月選択時の処理
+        setState(() {
+          this.selectedMonth = selectedMonth;
+          _updateBirthdateController();
+        });
       },
     );
   }
@@ -278,7 +294,7 @@ class _SignUpTwoState extends State<SignUpTwo> {
         labelText: '日',
         border: OutlineInputBorder(),
       ),
-      value: null,
+      value: selectedDay,
       hint: Text('日'),
       items: List.generate(31, (index) {
         return DropdownMenuItem(
@@ -287,8 +303,18 @@ class _SignUpTwoState extends State<SignUpTwo> {
         );
       }),
       onChanged: (selectedDay) {
-        // 日選択時の処理
+        setState(() {
+          this.selectedDay = selectedDay;
+          _updateBirthdateController();
+        });
       },
     );
+  }
+
+  void _updateBirthdateController() {
+    if (selectedYear != null && selectedMonth != null && selectedDay != null) {
+      birthdateController.text =
+          '$selectedYear-${selectedMonth!.toString().padLeft(2, '0')}-${selectedDay!.toString().padLeft(2, '0')}';
+    }
   }
 }

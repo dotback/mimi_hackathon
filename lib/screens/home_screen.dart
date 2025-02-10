@@ -29,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late final ApiService _apiService;
   late final ApiCognitiveTestService _cognitiveTestService;
   late final SharedPreferencesService _sharedPreferencesService;
-  late Future<local_user.User> _user;
+  late local_user.User _user;
   Map<String, dynamic>? _cognitiveTestResult;
   String _userEmail = 'ゲストユーザー';
   late final GeminiService _geminiService;
@@ -83,15 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _geminiService = GeminiService();
 
     // デフォルトのユーザーを初期化
-    _user = Future.value(local_user.User(
-      name: 'ゲストユーザー',
-      gender: 'unknown',
-      age: 0,
-      exerciseHabit: 'none',
-      sleepHours: 0.0,
-      email: '',
-      birthday: DateTime(1960, 1, 1),
-    ));
+    _user = local_user.User.createDefaultUser();
 
     // メールアドレスの読み込みを最初に実行
     _loadUserEmail().then((_) {
@@ -125,25 +117,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // ユーザープロファイルを取得
       try {
-        final fetchedUser = await _apiService.fetchUserProfile(userId);
+        final fetchedUser = await _apiService.fetchUserProfile();
 
         setState(() {
-          _user = Future.value(fetchedUser);
+          _user = fetchedUser;
         });
       } catch (fetchError) {
         print('ユーザープロファイルのフェッチ中のエラー: $fetchError');
 
         // デフォルトユーザーを設定
         setState(() {
-          _user = Future.value(local_user.User(
-            name: 'ゲストユーザー',
+          _user = local_user.User(
+            username: 'ゲストユーザー',
             gender: 'unknown',
             age: 0,
             exerciseHabit: 'none',
             sleepHours: 0.0,
             email: _userEmail,
-            birthday: DateTime(1960, 1, 1),
-          ));
+            birthDate: null,
+          );
         });
       }
 
@@ -154,15 +146,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // エラー時のフォールバック
       setState(() {
-        _user = Future.value(local_user.User(
-          name: 'ゲストユーザー',
+        _user = local_user.User(
+          username: 'ゲストユーザー',
           gender: 'unknown',
           age: 0,
           exerciseHabit: 'none',
           sleepHours: 0.0,
           email: _userEmail,
-          birthday: DateTime(1960, 1, 1),
-        ));
+          birthDate: null,
+        );
       });
     }
   }
@@ -189,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
 
       setState(() {
-        _user = Future.value(updatedUser);
+        _user = updatedUser;
       });
 
       final localResult =
@@ -247,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (context) => const LoginScreen(),
-        settings: RouteSettings(
+        settings: const RouteSettings(
           arguments: null,
         ),
       ),
@@ -267,14 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('マイプロフィール'),
         onTap: () {
           Get.back();
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => const UserProfileScreen(),
-              settings: RouteSettings(
-                arguments: null,
-              ),
-            ),
-          );
+          Get.to(() => const UserProfileScreen());
         },
       ),
       ListTile(
@@ -547,7 +532,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 認知機能テスト結果を表示するウィジェットを構築する
   Widget _buildCognitiveTestResult(BuildContext context) {
     return FutureBuilder<local_user.User>(
-      future: _user,
+      future: Future.value(_user),
       builder: (context, userSnapshot) {
         if (!userSnapshot.hasData || _cognitiveTestResult == null) {
           return const SizedBox.shrink();
@@ -974,7 +959,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: SafeArea(
         child: FutureBuilder<local_user.User>(
-          future: _user,
+          future: Future.value(_user),
           builder: (context, snapshot) {
             // 読み込み中の状態
             if (snapshot.connectionState == ConnectionState.waiting) {

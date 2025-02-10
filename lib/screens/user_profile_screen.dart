@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:get/get.dart';
+import 'package:mimi/constants/profile_selection.dart';
+import 'package:mimi/logic/services/api_service.dart';
+import 'package:mimi/signup/controller/auth_token_controller.dart';
+
 import '../data/models/user.dart';
 import '../utils/helper.dart';
 
@@ -11,6 +15,13 @@ class UserProfileScreen extends StatefulWidget {
 }
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _initializeProfile();
+  }
+
+  final _apiService = ApiService();
   final _nameController = TextEditingController();
   String? _selectedGender;
   final _ageController = TextEditingController();
@@ -19,69 +30,82 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   final _sleepHoursController = TextEditingController();
   bool _isLoading = true;
 
+  Future<void> _initializeProfile() async {
+    final controller = Get.find<AuthTokenController>();
+    if (controller.token.isEmpty) {
+      await Future.delayed(const Duration(seconds: 1));
+      if (mounted) {
+        await _initializeProfile();
+      }
+      return;
+    }
+    if (mounted) {
+      await _fetchUserProfile();
+    }
+  }
+
   @override
-  void initState() {
-    super.initState();
-    _fetchUserProfile();
+  void dispose() {
+    _nameController.dispose();
+    _ageController.dispose();
+    _sleepHoursController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchUserProfile() async {
     try {
-      setState(() {
-        _isLoading = true;
-      });
+      final userProfile = await _apiService.fetchUserProfile();
+      print(userProfile);
+      print('_isLoading');
+      print(_isLoading);
+      print('_isLoading');
 
-      // SharedPreferencesからプロフィール情報を取得
-      final prefs = await SharedPreferences.getInstance();
-
       setState(() {
-        _nameController.text = prefs.getString('name') ?? '';
-        _selectedGender = prefs.getString('gender') ?? '未設定';
-        _ageController.text = prefs.getString('age') ?? '0';
-        _selectedBirthday = prefs.getString('birthday') != null
-            ? DateTime.parse(prefs.getString('birthday')!)
-            : null;
-        _exerciseHabit = prefs.getString('exerciseHabit') ?? '';
-        _sleepHoursController.text = prefs.getString('sleepHours') ?? '0.0';
+        _nameController.text = userProfile.username;
+        _selectedGender = userProfile.gender;
+        if (userProfile.birthDate != null) {
+          _selectedBirthday = DateTime.tryParse(userProfile.birthDate!);
+          if (_selectedBirthday != null) {
+            _ageController.text =
+                Helper.calculateAge(_selectedBirthday!).toString();
+          } else {
+            _ageController.text = '';
+          }
+        } else {
+          _selectedBirthday = null;
+          _ageController.text = '';
+        }
+        _exerciseHabit = userProfile.exerciseHabit;
+        _sleepHoursController.text = userProfile.sleepHours.toString();
         _isLoading = false;
       });
-    } catch (e) {
+      print('_isLoading');
+      print(_isLoading);
+      print('_isLoading');
+    } catch (e, stackTrace) {
       setState(() {
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('プロフィール情報の取得に失敗しました: $e')),
       );
+      print('エラー: $stackTrace');
     }
   }
 
   _saveProfile() async {
-    final formState = Form.of(context);
-    if (formState.validate()) {
-      final prefs = await SharedPreferences.getInstance();
+    UpdateUser user = UpdateUser(
+      username: _nameController.text,
+      gender: _selectedGender,
+      birthDate: _selectedBirthday?.toIso8601String(),
+      exerciseHabit: _exerciseHabit,
+      sleepHours: double.tryParse(_sleepHoursController.text),
+    );
+    await _apiService.updateUserProfile(user);
 
-      // ユーザーモデルに合わせて保存
-      User user = User(
-        name: _nameController.text,
-        gender: _selectedGender ?? '未設定',
-        age: int.tryParse(_ageController.text) ?? 0,
-        birthday: _selectedBirthday ?? DateTime.now(),
-        exerciseHabit: _exerciseHabit ?? '',
-        sleepHours: double.tryParse(_sleepHoursController.text) ?? 0.0,
-        email: prefs.getString('email') ?? 'guest@example.com',
-      );
-
-      await prefs.setString('name', user.name);
-      await prefs.setString('gender', user.gender);
-      await prefs.setString('age', user.age.toString());
-      await prefs.setString('birthday', user.birthday.toIso8601String());
-      await prefs.setString('exerciseHabit', user.exerciseHabit);
-      await prefs.setString('sleepHours', user.sleepHours.toString());
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('プロフィールを保存しました')),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('プロフィールを保存しました')),
+    );
   }
 
   Future<void> _selectBirthday(BuildContext context) async {
@@ -122,7 +146,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Get.back(),
         ),
         actions: [
           IconButton(
@@ -210,11 +234,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       ),
       child: Row(
         children: [
-          CircleAvatar(
+          const CircleAvatar(
             radius: 40,
             backgroundColor: Colors.white,
-            backgroundImage: const AssetImage('assets/images/user_icon.png')
-                as ImageProvider,
+            backgroundImage:
+                AssetImage('assets/images/user_icon.png') as ImageProvider,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -274,20 +298,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         ),
       ),
       value: _selectedGender,
-      items: [
-        const DropdownMenuItem(
-          value: '未設定',
-          child: Text('未設定'),
-        ),
-        const DropdownMenuItem(
+      items: const [
+        DropdownMenuItem(
           value: '男性',
           child: Text('男性'),
         ),
-        const DropdownMenuItem(
+        DropdownMenuItem(
           value: '女性',
           child: Text('女性'),
         ),
-        const DropdownMenuItem(
+        DropdownMenuItem(
           value: 'その他',
           child: Text('その他'),
         ),
@@ -363,7 +383,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         ),
       ),
       value: _exerciseHabit,
-      items: ['ほぼ毎日', '週3-4回', '週1-2回', 'ほとんどしない']
+      items: exerciseHabits
           .map((habit) => DropdownMenuItem(
                 value: habit,
                 child: Text(habit),
@@ -425,13 +445,5 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _ageController.dispose();
-    _sleepHoursController.dispose();
-    super.dispose();
   }
 }
