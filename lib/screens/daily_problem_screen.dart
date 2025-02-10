@@ -7,6 +7,7 @@ import 'problem_solve_screen.dart';
 import 'language_problem_screen.dart';
 import 'image_recognition_problem_screen.dart';
 import 'package:get/get.dart';
+import 'home_screen.dart';
 
 class DailyProblemScreen extends StatefulWidget {
   final Map<String, dynamic>? personalizedTest;
@@ -199,7 +200,10 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
         backgroundColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Get.back(),
+          onPressed: () {
+            // GetXを使用してホーム画面に遷移
+            Get.offAll(() => const HomeScreen());
+          },
         ),
       ),
       body: SafeArea(
@@ -555,40 +559,19 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
     // カテゴリと型に応じて適切な画面に遷移
     switch (problem.category) {
       case ProblemCategory.language:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => LanguageProblemScreen(problem: problem),
-          ),
-        );
+        Get.to(() => LanguageProblemScreen(problem: problem));
         break;
       case ProblemCategory.memory:
         if (problem.description == '画像問題') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  ImageRecognitionProblemScreen(problem: problem),
-            ),
-          );
+          Get.to(() => ImageRecognitionProblemScreen(problem: problem));
         } else {
           // 通常の記憶問題
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProblemSolveScreen(problem: problem),
-            ),
-          );
+          Get.to(() => ProblemSolveScreen(problem: problem));
         }
         break;
       default:
         // その他の問題はProblemSolveScreenで解く
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProblemSolveScreen(problem: problem),
-          ),
-        );
+        Get.to(() => ProblemSolveScreen(problem: problem));
     }
   }
 

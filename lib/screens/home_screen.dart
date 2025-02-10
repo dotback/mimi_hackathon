@@ -13,7 +13,7 @@ import 'cognitive_test_screen.dart';
 import 'daily_problem_screen.dart';
 import 'user_profile_screen.dart';
 import '../services/auth_service.dart';
-import 'login_screen.dart';
+import '../login/login_screen.dart';
 import '../services/gemini_service.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
