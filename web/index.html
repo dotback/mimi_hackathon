@@ -27,12 +27,29 @@
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" href="assets/icon/mimi-half.png"/>
 
   <title>mimi</title>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <div id="loading">
+    <style>
+      .loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      .loading img {
+        width: 400px;
+        height: 400px;
+      }
+    </style>
+    <div class="loading">
+      <img src="assets/icon/mimi-icon.jpeg" alt="Loading indicator"/>
+    </div>
+  </div>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
