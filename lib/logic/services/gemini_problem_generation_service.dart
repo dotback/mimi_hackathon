@@ -79,13 +79,13 @@ class GeminiProblemGenerationService {
   Future<User> fetchUserProfile(String userId) async {
     // 実際のアプリでは、APIやデータベースからユーザー情報を取得
     return User(
-      name: 'テストユーザー',
+      username: 'テストユーザー',
       email: 'test@example.com',
       age: 65,
       gender: 'male',
       exerciseHabit: '週3回',
       sleepHours: 7.0,
-      birthday: DateTime(1960, 1, 1),
+      birthDate: null,
     );
   }
 }

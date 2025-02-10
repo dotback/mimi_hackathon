@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
+import 'package:mimi/logic/services/api_service.dart';
+import 'package:mimi/signup/controller/auth_token_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'screens/home_screen.dart';
@@ -23,11 +26,10 @@ void main() async {
   };
 
   // Firebase初期化
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } catch (e) {}
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
 
   Get.put<String>(Env.geminiApiKey, tag: 'geminiApiKey');
 
@@ -68,6 +70,12 @@ class MyApp extends StatelessWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
         textTheme: GoogleFonts.murechoTextTheme(),
       ),
+      initialBinding: BindingsBuilder(() {
+        Get.put(AuthTokenController(), permanent: true);
+        Get.put(AuthService(), permanent: true);
+        Get.put(ApiService(), permanent: true);
+      }),
+      navigatorKey: Get.key,
       initialRoute: '/login',
       getPages: [
         GetPage(
@@ -87,7 +95,6 @@ class MyApp extends StatelessWidget {
       ],
       defaultTransition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 300),
-      navigatorKey: Get.key,
     );
   }
 }

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:mimi/constants/profile_selection.dart';
+import 'package:mimi/logic/services/api_service.dart';
+import 'package:mimi/signup/controller/auth_token_controller.dart';
+
 import '../data/models/user.dart';
-import '../utils/helper.dart';
 import '../screens/home_screen.dart';
+import '../utils/helper.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -13,137 +17,100 @@ class UserProfileScreen extends StatefulWidget {
 }
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
-  final _nameController = TextEditingController();
-  String? _selectedGender;
-  final _ageController = TextEditingController();
-  DateTime? _selectedBirthday;
-  String? _exerciseHabit;
-  String? _sleepHabit;
-  bool _isLoading = true;
-  final _formKey = GlobalKey<FormState>();
-
   @override
   void initState() {
     super.initState();
-    _fetchUserProfile();
+    _initializeProfile();
+  }
+
+  final _apiService = ApiService();
+  final _nameController = TextEditingController();
+  String? _selectedGender;
+  final _ageController = TextEditingController();
+  final _sleepHoursController = TextEditingController();
+  DateTime? _selectedBirthday;
+  String? _exerciseHabit;
+  bool _isLoading = true;
+  final _formKey = GlobalKey<FormState>();
+
+  Future<void> _initializeProfile() async {
+    final controller = Get.find<AuthTokenController>();
+    if (controller.token.isEmpty) {
+      await Future.delayed(const Duration(seconds: 1));
+      if (mounted) {
+        await _initializeProfile();
+      }
+      return;
+    }
+    if (mounted) {
+      await _fetchUserProfile();
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _ageController.dispose();
+    _sleepHoursController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchUserProfile() async {
     try {
+      final userProfile = await _apiService.fetchUserProfile();
       setState(() {
-        _isLoading = true;
-      });
-
-      // SharedPreferencesからプロフィール情報を取得
-      final prefs = await SharedPreferences.getInstance();
-
-      setState(() {
-        _nameController.text = prefs.getString('name') ?? '';
-        _selectedGender = prefs.getString('gender') ?? '未設定';
-        _ageController.text = prefs.getString('age') ?? '0';
-        _selectedBirthday = prefs.getString('birthday') != null
-            ? DateTime.parse(prefs.getString('birthday')!)
-            : null;
-
-        // 運動習慣の初期値を修正
-        String? storedExerciseHabit = prefs.getString('exerciseHabit');
-        _exerciseHabit = storedExerciseHabit != null &&
-                ['ほぼ毎日', '週3-4回', '週1-2回', 'ほとんどしない']
-                    .contains(storedExerciseHabit)
-            ? storedExerciseHabit
-            : null;
-
-        // 睡眠時間の初期値を修正
-        String? storedSleepHabit = prefs.getString('sleepHabit');
-        _sleepHabit = storedSleepHabit != null &&
-                ['4時間未満', '4-6時間', '6-8時間', '8時間以上'].contains(storedSleepHabit)
-            ? storedSleepHabit
-            : null;
-
+        _nameController.text = userProfile.username;
+        _selectedGender = userProfile.gender;
+        if (userProfile.birthDate != null) {
+          _selectedBirthday = DateTime.tryParse(userProfile.birthDate!);
+          if (_selectedBirthday != null) {
+            _ageController.text =
+                Helper.calculateAge(_selectedBirthday!).toString();
+          } else {
+            _ageController.text = '';
+          }
+        } else {
+          _selectedBirthday = null;
+          _ageController.text = '';
+        }
+        _exerciseHabit = userProfile.exerciseHabit;
+        _sleepHoursController.text = userProfile.sleepHours.toString();
         _isLoading = false;
       });
-    } catch (e) {
+    } catch (e, stackTrace) {
       setState(() {
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('プロフィール情報の取得に失敗しました: $e')),
       );
+      print('エラー: $stackTrace');
     }
   }
 
   _saveProfile() async {
-    // デバッグ用のprint文を追加
-    if (_formKey.currentState == null) {
-      return;
-    }
+    UpdateUser user = UpdateUser(
+      username: _nameController.text,
+      gender: _selectedGender,
+      birthDate: _selectedBirthday?.toIso8601String(),
+      exerciseHabit: _exerciseHabit,
+      sleepHours: double.tryParse(_sleepHoursController.text),
+    );
+    await _apiService.updateUserProfile(user);
 
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-
-      // ユーザーモデルに合わせて保存
-      User user = User(
-        name: _nameController.text,
-        gender: _selectedGender ?? '未設定',
-        age: int.tryParse(_ageController.text) ?? 0,
-        birthday: _selectedBirthday ?? DateTime.now(),
-        exerciseHabit: _exerciseHabit ?? 'ほとんどしない',
-        sleepHours: _sleepHabit == '4時間未満'
-            ? 3.0
-            : _sleepHabit == '4-6時間'
-                ? 5.0
-                : _sleepHabit == '6-8時間'
-                    ? 7.0
-                    : 9.0, // 8時間以上
-        email: prefs.getString('email') ?? 'guest@example.com',
-      );
-
-      // すべての情報を保存
-      await prefs.setString('name', user.name);
-      await prefs.setString('gender', user.gender);
-      await prefs.setString('age', user.age.toString());
-      await prefs.setString('birthday', user.birthday.toIso8601String());
-      await prefs.setString('exerciseHabit', user.exerciseHabit);
-      await prefs.setString('sleepHabit', _sleepHabit ?? '6-8時間');
-      await prefs.setString('sleepHours', user.sleepHours.toString());
-
-      // プロフィールを再読み込み
-      await _fetchUserProfile();
-
-      // ダイアログで成功メッセージを表示
-      await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('プロフィール更新'),
-          content: const Text('プロフィールが正常に更新されました。'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-    } catch (e) {
-      // エラー時のダイアログ
-      await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('エラー'),
-          content: Text('プロフィールの更新中にエラーが発生しました: $e'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-    }
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('プロフィール更新'),
+        content: const Text('プロフィールが正常に更新されました。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _selectBirthday(BuildContext context) async {
@@ -238,7 +205,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               const SizedBox(height: 16),
 
                               // 睡眠時間
-                              _buildSleepHabitDropdown(),
+                              _buildSleepHabitField(),
                               const SizedBox(height: 24),
 
                               // 保存ボタン
@@ -276,11 +243,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       ),
       child: Row(
         children: [
-          CircleAvatar(
+          const CircleAvatar(
             radius: 40,
             backgroundColor: Colors.white,
-            backgroundImage: const AssetImage('assets/images/user_icon.png')
-                as ImageProvider,
+            backgroundImage:
+                AssetImage('assets/images/user_icon.png') as ImageProvider,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -340,20 +307,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         ),
       ),
       value: _selectedGender,
-      items: [
-        const DropdownMenuItem(
-          value: '未設定',
-          child: Text('未設定'),
-        ),
-        const DropdownMenuItem(
+      items: const [
+        DropdownMenuItem(
           value: '男性',
           child: Text('男性'),
         ),
-        const DropdownMenuItem(
+        DropdownMenuItem(
           value: '女性',
           child: Text('女性'),
         ),
-        const DropdownMenuItem(
+        DropdownMenuItem(
           value: 'その他',
           child: Text('その他'),
         ),
@@ -426,9 +389,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   Widget _buildExerciseHabitDropdown() {
-    // 運動習慣のオプションを定義
-    final exerciseHabitOptions = ['未選択', 'ほぼ毎日', '週3-4回', '週1-2回', 'ほとんどしない'];
-
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
         labelText: '運動習慣',
@@ -437,8 +397,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           borderRadius: BorderRadius.circular(12),
         ),
       ),
-      value: _exerciseHabit ?? '未選択',
-      items: exerciseHabitOptions
+      value: _exerciseHabit,
+      items: exerciseHabits
           .map((habit) => DropdownMenuItem(
                 value: habit,
                 child: Text(habit),
@@ -458,36 +418,20 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-  Widget _buildSleepHabitDropdown() {
-    // 睡眠時間のオプションを定義
-    final sleepHabitOptions = ['未選択', '4時間未満', '4-6時間', '6-8時間', '8時間以上'];
-
-    return DropdownButtonFormField<String>(
+  Widget _buildSleepHabitField() {
+    return TextFormField(
+      controller: _sleepHoursController,
       decoration: InputDecoration(
         labelText: '睡眠時間',
+        hintText: "7.5",
         prefixIcon: const Icon(Icons.bedtime),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
       ),
-      value: _sleepHabit ?? '未選択',
-      items: sleepHabitOptions
-          .map((habit) => DropdownMenuItem(
-                value: habit,
-                child: Text(habit),
-              ))
-          .toList(),
-      onChanged: (value) {
-        setState(() {
-          _sleepHabit = value == '未選択' ? null : value;
-        });
-      },
-      validator: (value) {
-        if (value == null || value == '未選択') {
-          return '睡眠時間を選択してください';
-        }
-        return null;
-      },
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'^\d{1,2}(\.|(\.\d))?$')),
+      ],
     );
   }
 
@@ -510,12 +454,5 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _ageController.dispose();
-    super.dispose();
   }
 }

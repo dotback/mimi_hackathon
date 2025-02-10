@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hexcolor/hexcolor.dart';
+import 'package:mimi/signup/sign_up_screen.dart';
 import '../../components/my_button.dart';
 import '../../components/my_textfield.dart';
 import 'package:flutter/foundation.dart';

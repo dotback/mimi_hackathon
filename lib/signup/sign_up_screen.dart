@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hexcolor/hexcolor.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../screens/home_screen.dart';
+import 'package:intl/intl.dart';
+import 'package:mimi/constants/profile_selection.dart';
+import 'package:mimi/data/models/user.dart';
+import 'package:mimi/logic/services/api_service.dart';
+import 'package:mimi/screens/home_screen.dart';
+
+import '../components/my_button.dart';
 import '../services/auth_service.dart';
 import '../utils/helper.dart';
-import '../components/my_button.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -20,11 +25,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
   final _ageController = TextEditingController();
+  final _sleepHoursController = TextEditingController();
 
   String? _selectedGender;
-  DateTime? _selectedBirthday;
+  DateTime? _selectedBirthDate;
   String? _exerciseHabit;
-  String? _sleepHabit;
 
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
@@ -38,34 +43,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     try {
       final authService = Get.find<AuthService>();
-      final user = await authService.signUp(
+      final apiService = Get.find<ApiService>();
+      await authService.signUp(
           _emailController.text.trim(), _passwordController.text.trim());
-
-      if (user != null) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('email', _emailController.text.trim());
-        await prefs.setString('name', _nameController.text);
-        await prefs.setString('gender', _selectedGender ?? '未設定');
-        await prefs.setString('age', _ageController.text);
-        await prefs.setString(
-            'birthday', _selectedBirthday?.toIso8601String() ?? '');
-        await prefs.setString('exerciseHabit', _exerciseHabit ?? '');
-
-        await prefs.setString('sleepHabit', _sleepHabit ?? '6-8時間');
-        await prefs.setString(
-            'sleepHours',
-            _sleepHabit == '4時間未満'
-                ? '3.0'
-                : _sleepHabit == '4-6時間'
-                    ? '5.0'
-                    : _sleepHabit == '6-8時間'
-                        ? '7.0'
-                        : '9.0');
-
-        Get.offAll(() => const HomeScreen());
-      } else {
-        _showErrorSnackBar('アカウント作成に失敗しました');
-      }
+      final User user = User(
+        username: _nameController.text,
+        gender: _selectedGender.toString(),
+        age: 0,
+        birthDate: DateFormat('yyyy-MM-dd')
+            .format(_selectedBirthDate ?? DateTime.now()),
+        exerciseHabit: _exerciseHabit!,
+        sleepHours: double.parse(_sleepHoursController.text),
+        email: _emailController.text,
+      );
+      await apiService.createUser(user);
+      Get.offAll(() => const HomeScreen());
     } catch (e) {
       _showErrorSnackBar(e.toString());
     } finally {
@@ -90,7 +82,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
     if (picked != null) {
       setState(() {
-        _selectedBirthday = picked;
+        _selectedBirthDate = picked;
         _ageController.text = Helper.calculateAge(picked).toString();
       });
     }
@@ -168,7 +160,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: HexColor("#ffffff").withOpacity(0.9),
-                      borderRadius: BorderRadius.only(
+                      borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(50),
                         topRight: Radius.circular(50),
                       ),
@@ -247,7 +239,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               const SizedBox(height: 16),
                               _buildDropdown(
                                 labelText: "性別",
-                                options: ['男性', '女性', 'その他'],
+                                options: genders,
                                 currentValue: _selectedGender,
                                 onChanged: (value) {
                                   setState(() {
@@ -269,9 +261,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     child: _buildFormField(
                                       labelText: "生年月日",
                                       controller: TextEditingController(
-                                        text: _selectedBirthday != null
+                                        text: _selectedBirthDate != null
                                             ? Helper.formatDate(
-                                                _selectedBirthday!)
+                                                _selectedBirthDate!)
                                             : '',
                                       ),
                                       hintText: "生年月日を選択",
@@ -279,7 +271,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       readOnly: true,
                                       onTap: () => _selectBirthday(context),
                                       validator: (value) {
-                                        if (_selectedBirthday == null) {
+                                        if (_selectedBirthDate == null) {
                                           return '生年月日を選択してください';
                                         }
                                         return null;
@@ -301,7 +293,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               const SizedBox(height: 16),
                               _buildDropdown(
                                 labelText: "運動習慣",
-                                options: ['ほぼ毎日', '週3-4回', '週1-2回', 'ほとんどしない'],
+                                options: exerciseHabits,
                                 currentValue: _exerciseHabit,
                                 onChanged: (value) {
                                   setState(() {
@@ -316,28 +308,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 },
                               ),
                               const SizedBox(height: 16),
-                              _buildDropdown(
+                              _buildFormField(
+                                controller: _sleepHoursController,
                                 labelText: "睡眠時間",
-                                options: [
-                                  '未選択',
-                                  '4時間未満',
-                                  '4-6時間',
-                                  '6-8時間',
-                                  '8時間以上'
+                                hintText: "7.5",
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                      RegExp(r'^\d{1,2}(\.|(\.\d))?$')),
                                 ],
-                                currentValue: _sleepHabit ?? '未選択',
-                                onChanged: (value) {
-                                  setState(() {
-                                    _sleepHabit = value == '未選択' ? null : value;
-                                  });
-                                },
-                                validator: (value) {
-                                  if (value == null || value == '未選択') {
-                                    return '睡眠時間を選択してください';
-                                  }
-                                  return null;
-                                },
                               ),
+                              //   validator: (value) {
+                              //     if (value == null || value == '未選択') {
+                              //       return '睡眠時間を選択してください';
+                              //     }
+                              //     return null;
+                              //   },
+                              // ),
                               const SizedBox(height: 24),
                               _isLoading
                                   ? Center(
@@ -403,6 +389,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     bool obscureText = false,
     void Function(String)? onChanged,
     String? Function(String?)? validator,
+    List<FilteringTextInputFormatter>? inputFormatters,
     bool readOnly = false,
     void Function()? onTap,
   }) {
@@ -439,6 +426,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           readOnly: readOnly,
           onTap: onTap,
           onChanged: onChanged,
+          inputFormatters: inputFormatters,
         ),
         if (validator != null)
           Padding(

@@ -1,5 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:get/get.dart';
+import 'package:mimi/data/models/user.dart';
+import 'package:mimi/logic/services/api_service.dart';
 import '../../models/file_model.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/auth_service.dart';
@@ -17,12 +19,13 @@ class SignUpController extends GetxController {
   FileModel? _resumeFile;
   String? _username;
   String? _gender;
-  String? _birthdate;
+  String? _birthDate;
   int? _age;
   String? _exerciseHabit;
-  String? _sleepHabit;
+  double? _sleepHours;
 
-  final AuthService _authService = Get.put(AuthService());
+  final AuthService _authService = Get.find<AuthService>();
+  final ApiService _apiService = Get.find<ApiService>();
 
   String? get userType => _userType;
   String? get email => _email;
@@ -36,10 +39,10 @@ class SignUpController extends GetxController {
   FileModel? get resumeFile => _resumeFile;
   String? get username => _username;
   String? get gender => _gender;
-  String? get birthdate => _birthdate;
+  String? get birthDate => _birthDate;
   int? get age => _age;
   String? get exerciseHabit => _exerciseHabit;
-  String? get sleepHabit => _sleepHabit;
+  double? get sleepHours => _sleepHours;
 
   void setUserType(String value) {
     _userType = value;
@@ -63,6 +66,11 @@ class SignUpController extends GetxController {
 
   void setName(String value) {
     _name = value;
+    update();
+  }
+
+  void setSleepHours(double value) {
+    _sleepHours = value;
     update();
   }
 
@@ -94,24 +102,23 @@ class SignUpController extends GetxController {
   void setAdditionalUserInfo({
     required String username,
     required String gender,
-    required String birthdate,
+    required String birthDate,
     required int age,
     required String exerciseHabit,
-    required String sleepHabit,
   }) {
     _username = username;
     _gender = gender;
-    _birthdate = birthdate;
+    _birthDate = birthDate;
     _age = age;
     _exerciseHabit = exerciseHabit;
-    _sleepHabit = sleepHabit;
     update();
   }
 
-  Future<bool> registerUser(String email, String password) async {
+  Future<bool> registerUser(String email, String password, User user) async {
     try {
-      User? user = await _authService.signUp(email, password);
-      return user != null;
+      await _authService.signUp(email, password);
+      await _apiService.createUser(user);
+      return true;
     } catch (e) {
       return false;
     }
@@ -124,11 +131,15 @@ class SignUpController extends GetxController {
         return false;
       }
 
-      UserCredential userCredential = await FirebaseAuth.instance
+      firebase_auth.UserCredential userCredential = await firebase_auth
+          .FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
-
       return userCredential.user != null;
-    } on FirebaseAuthException catch (e) {
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      // 詳細なエラーログ
+      print('FirebaseAuthエラー: ${e.code}');
+      print('エラーメッセージ: ${e.message}');
+
       // エラーコードに基づいたより詳細なエラーハンドリング
       switch (e.code) {
         case 'user-not-found':

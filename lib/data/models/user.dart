@@ -1,8 +1,8 @@
 class User {
-  final String name;
+  final String username;
   final String gender;
   final int age;
-  final DateTime birthday;
+  final String? birthDate;
   final String exerciseHabit;
   final double sleepHours;
   final String email;
@@ -10,26 +10,39 @@ class User {
   final String? cognitiveFunctionComment;
 
   User({
-    required this.name,
+    required this.username,
     required this.gender,
     required this.age,
-    DateTime? birthday,
+    this.birthDate,
     required this.exerciseHabit,
     required this.sleepHours,
     required this.email,
     this.cognitiveFunctionScore,
     this.cognitiveFunctionComment,
-  }) : birthday = birthday ?? DateTime(1960, 1, 1);
+  });
+
+  static User createDefaultUser() {
+    return User(
+      username: 'ゲストユーザー',
+      gender: '未設定',
+      age: 30,
+      birthDate: null, // Changed to null
+      exerciseHabit: '週3回',
+      sleepHours: 7.0,
+      email: 'guest@example.com',
+    );
+  }
 
   // JSONからUserオブジェクトを作成するコンストラクタ
   factory User.fromJson(Map<String, dynamic> json) {
+    final double sleepHours = double.parse(json['sleepHours']);
     return User(
-      name: json['name'],
+      username: json['username'],
       gender: json['gender'],
       age: json['age'],
-      birthday: DateTime.parse(json['birthday']),
+      birthDate: json['birthDate'], // No need to parse
       exerciseHabit: json['exerciseHabit'],
-      sleepHours: (json['sleepHours'] ?? 0.0).toDouble(),
+      sleepHours: sleepHours,
       email: json['email'] ?? 'guest@example.com',
       cognitiveFunctionScore: json['cognitiveFunctionScore'],
       cognitiveFunctionComment: json['cognitiveFunctionComment'],
@@ -39,10 +52,10 @@ class User {
   // UserオブジェクトをJSONに変換するメソッド
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
+      'username': username,
       'gender': gender,
       'age': age,
-      'birthday': birthday.toIso8601String(),
+      'birthDate': birthDate, // No need to convert
       'exerciseHabit': exerciseHabit,
       'sleepHours': sleepHours,
       'email': email,
@@ -53,10 +66,10 @@ class User {
 
   // 追加のヘルパーメソッド
   User copyWith({
-    String? name,
+    String? username,
     String? gender,
     int? age,
-    DateTime? birthday,
+    String? birthDate,
     String? exerciseHabit,
     double? sleepHours,
     String? email,
@@ -64,10 +77,10 @@ class User {
     String? cognitiveFunctionComment,
   }) {
     return User(
-      name: name ?? this.name,
+      username: username ?? this.username,
       gender: gender ?? this.gender,
       age: age ?? this.age,
-      birthday: birthday ?? this.birthday,
+      birthDate: birthDate ?? this.birthDate,
       exerciseHabit: exerciseHabit ?? this.exerciseHabit,
       sleepHours: sleepHours ?? this.sleepHours,
       email: email ?? this.email,
@@ -76,5 +89,36 @@ class User {
       cognitiveFunctionComment:
           cognitiveFunctionComment ?? this.cognitiveFunctionComment,
     );
+  }
+}
+
+class UpdateUser {
+  final String? username;
+  final String? gender;
+  final int? age;
+  final String? birthDate;
+  final String? exerciseHabit;
+  final double? sleepHours;
+  final String? email;
+
+  UpdateUser(
+      {this.username,
+      this.gender,
+      this.age,
+      this.birthDate,
+      this.exerciseHabit,
+      this.sleepHours,
+      this.email});
+
+  Map<String, dynamic> toJson() {
+    return {
+      'username': username,
+      'gender': gender,
+      'age': age,
+      'birthDate': birthDate,
+      'exerciseHabit': exerciseHabit,
+      'sleepHours': sleepHours,
+      'email': email,
+    };
   }
 }

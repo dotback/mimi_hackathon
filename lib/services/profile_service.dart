@@ -20,12 +20,12 @@ class ProfileService {
 
         // より柔軟なデータ抽出
         return User(
-          name: _extractValue(data, ['username', 'name', 'displayName'], ''),
+          username:
+              _extractValue(data, ['username', 'name', 'displayName'], ''),
           gender: _extractValue(data, ['gender', 'sex'], '未設定'),
           age:
               _calculateAge(_extractValue(data, ['birthDate', 'birthday'], '')),
-          birthday: _parseBirthday(
-              _extractValue(data, ['birthDate', 'birthday'], '')),
+          birthDate: _extractValue(data, ['birthDate', 'birthday'], ''),
           exerciseHabit:
               _extractValue(data, ['custom', 'exerciseHabit', 'exercise'], ''),
           sleepHours: _extractSleepHours(data),
@@ -61,6 +61,9 @@ class ProfileService {
     return 0.0;
   }
 
+<<<<<<< HEAD
+  // 年齢を安全に計算
+=======
   // 生年月日を安全にパース
   DateTime _parseBirthday(String? birthDateString) {
     if (birthDateString == null || birthDateString.isEmpty)
@@ -73,6 +76,7 @@ class ProfileService {
     }
   }
 
+>>>>>>> adc65a5e1359de911c3cc4c5934af2b48ca4cb54
   int _calculateAge(String? birthDateString) {
     if (birthDateString == null || birthDateString.isEmpty) return 0;
 
