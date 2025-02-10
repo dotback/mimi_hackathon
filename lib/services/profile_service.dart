@@ -61,22 +61,7 @@ class ProfileService {
     return 0.0;
   }
 
-<<<<<<< HEAD
   // 年齢を安全に計算
-=======
-  // 生年月日を安全にパース
-  DateTime _parseBirthday(String? birthDateString) {
-    if (birthDateString == null || birthDateString.isEmpty)
-      return DateTime.now();
-
-    try {
-      return DateTime.parse(birthDateString);
-    } catch (e) {
-      return DateTime.now();
-    }
-  }
-
->>>>>>> adc65a5e1359de911c3cc4c5934af2b48ca4cb54
   int _calculateAge(String? birthDateString) {
     if (birthDateString == null || birthDateString.isEmpty) return 0;
 
