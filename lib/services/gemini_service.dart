@@ -40,7 +40,7 @@ class GeminiService {
   "type": "通常問題",
   "category": "言語能力",
   "title": "最近読んだ本について教えてください",
-  "description": "最近読んだ本の題名、著者、そしてその本から学んだことや感銘を受けた部分について具体的に書いてください。",
+  "description": "最近読んだ本の題名、著者、そしてその本から学んだことや感銘を受けた部分について具体的に書いてください。", // ここがユーザーへの質問内容になります
   "correctAnswer": "具体的で詳細な回答を評価",
   "difficulty": 2
 }
@@ -50,7 +50,7 @@ class GeminiService {
   "type": "音声問題",
   "category": "言語能力",
   "question": "子供の頃の思い出を音声で話してください",
-  "description": "あなたの子供の頃の一番楽しかった思い出を話してください。", // できるだけ簡潔なdescriptionを作成
+  "description": "子供の頃の思い出を詳細に話してください。",  // ここがユーザーへの質問内容になります
   "correctAnswer": "詳細に話せた",
   "difficulty": 2
 }
@@ -184,7 +184,12 @@ class GeminiService {
 
   Future<void> _saveGeneratedTest(Map<String, dynamic> test) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('personalized_test', json.encode(test));
+    // dailyProblemsを直接保存
+    await prefs.setString(
+        'personalized_daily_problems', json.encode(test['dailyProblems']));
+    // ToDoリストも別途保存
+    await prefs.setString(
+        'personalized_todo_list', json.encode(test['todoList']));
   }
 
   Future<Map<String, dynamic>?> getLocalTest() async {
@@ -195,11 +200,10 @@ class GeminiService {
 
   Future<List<dynamic>> getLocalTodoList() async {
     final prefs = await SharedPreferences.getInstance();
-    final testJson = prefs.getString('personalized_test');
+    final todoJson = prefs.getString('personalized_todo_list');
 
-    if (testJson != null) {
-      final parsedTest = json.decode(testJson);
-      return parsedTest['todoList'] ?? [];
+    if (todoJson != null) {
+      return json.decode(todoJson);
     }
 
     return [];

@@ -102,8 +102,36 @@ class _LanguageProblemScreenState extends State<LanguageProblemScreen>
     // 問題文を音声で読み上げ
     await _speechService.speak(widget.problem.description);
 
-    // 問題文読み上げ用のタイマーを開始
-    _startDescriptionCountdown();
+    // 問題文読み上げ完了後、マイク権限の確認
+    bool isMicPermissionGranted = await _speechService.checkMicPermission();
+
+    if (isMicPermissionGranted) {
+      // マイク権限が許可されている場合のみ、リスニングフェーズを開始
+      _startDescriptionCountdown();
+    } else {
+      // マイク権限が拒否された場合のエラーダイアログ
+      _showMicPermissionErrorDialog();
+    }
+  }
+
+  void _showMicPermissionErrorDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('マイク権限が必要です'),
+        content: Text('音声による回答を行うには、マイク権限が必要です。設定からマイク権限を許可してください。'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // 前の画面に戻る
+              Navigator.of(context).pop();
+            },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _startDescriptionCountdown() {
@@ -389,7 +417,7 @@ class _LanguageProblemScreenState extends State<LanguageProblemScreen>
             _isAnalyzing = false;
             _isListening = false;
 
-            // userAnswerを明示的に設定
+            // 最終的な回答テキストを正確に設定
             _evaluation = evaluation.copyWith(userAnswer: finalText);
 
             // デバッグ用のprint

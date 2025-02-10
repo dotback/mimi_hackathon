@@ -38,12 +38,9 @@ class _ImageRecognitionProblemScreenState
     'assets/question_images/1000001412.jpg',
     'assets/question_images/1000001442.jpg',
     'assets/question_images/1000001160.jpg',
-    'assets/question_images/1000000891.jpg',
     'assets/question_images/1000001320.jpg',
     'assets/question_images/1000000832.jpg',
     'assets/question_images/1000000191.jpg',
-    'assets/question_images/1000000134.jpg',
-    'assets/question_images/1000002288.jpg',
   ];
 
   String? _selectedImage;

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:mimi/constants/profile_selection.dart';
 import 'package:mimi/logic/services/api_service.dart';
 import 'package:mimi/signup/controller/auth_token_controller.dart';
 
 import '../data/models/user.dart';
+import '../screens/home_screen.dart';
 import '../utils/helper.dart';
 
 class UserProfileScreen extends StatefulWidget {
@@ -25,10 +27,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   final _nameController = TextEditingController();
   String? _selectedGender;
   final _ageController = TextEditingController();
+  final _sleepHoursController = TextEditingController();
   DateTime? _selectedBirthday;
   String? _exerciseHabit;
-  final _sleepHoursController = TextEditingController();
   bool _isLoading = true;
+  final _formKey = GlobalKey<FormState>();
 
   Future<void> _initializeProfile() async {
     final controller = Get.find<AuthTokenController>();
@@ -55,11 +58,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Future<void> _fetchUserProfile() async {
     try {
       final userProfile = await _apiService.fetchUserProfile();
-      print(userProfile);
-      print('_isLoading');
-      print(_isLoading);
-      print('_isLoading');
-
       setState(() {
         _nameController.text = userProfile.username;
         _selectedGender = userProfile.gender;
@@ -79,9 +77,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         _sleepHoursController.text = userProfile.sleepHours.toString();
         _isLoading = false;
       });
-      print('_isLoading');
-      print(_isLoading);
-      print('_isLoading');
     } catch (e, stackTrace) {
       setState(() {
         _isLoading = false;
@@ -146,7 +141,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Get.back(),
+          onPressed: () {
+            // GetXを使用したナビゲーション
+            Get.offAll(() => const HomeScreen());
+          },
         ),
         actions: [
           IconButton(
@@ -176,6 +174,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Form(
+                          key: _formKey,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -196,7 +195,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               const SizedBox(height: 16),
 
                               // 睡眠時間
-                              _buildSleepHoursField(),
+                              _buildSleepHabitField(),
                               const SizedBox(height: 24),
 
                               // 保存ボタン
@@ -280,7 +279,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         ),
       ),
       validator: (value) {
-        if (Helper.isNullOrEmpty(value)) {
+        if (value == null || value.trim().isEmpty) {
           return '氏名を入力してください';
         }
         return null;
@@ -367,6 +366,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             ),
             keyboardType: TextInputType.number,
             readOnly: true,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return '年齢を計算してください';
+              }
+              return null;
+            },
           ),
         ),
       ],
@@ -391,11 +396,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           .toList(),
       onChanged: (value) {
         setState(() {
-          _exerciseHabit = value;
+          _exerciseHabit = value == '未選択' ? null : value;
         });
       },
       validator: (value) {
-        if (value == null) {
+        if (value == null || value == '未選択') {
           return '運動習慣を選択してください';
         }
         return null;
@@ -403,27 +408,20 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-  Widget _buildSleepHoursField() {
+  Widget _buildSleepHabitField() {
     return TextFormField(
       controller: _sleepHoursController,
       decoration: InputDecoration(
-        labelText: '睡眠時間 (時間)',
+        labelText: '睡眠時間',
+        hintText: "7.5",
         prefixIcon: const Icon(Icons.bedtime),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
       ),
-      keyboardType: TextInputType.number,
-      validator: (value) {
-        if (Helper.isNullOrEmpty(value)) {
-          return '睡眠時間を入力してください';
-        }
-        double? hours = double.tryParse(value!);
-        if (hours == null || hours < 0 || hours > 24) {
-          return '有効な睡眠時間を入力してください';
-        }
-        return null;
-      },
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'^\d{1,2}(\.|(\.\d))?$')),
+      ],
     );
   }
 
@@ -442,6 +440,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
+          color: Colors.white,
         ),
       ),
     );

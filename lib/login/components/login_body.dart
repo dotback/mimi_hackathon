@@ -9,6 +9,7 @@ import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import '../../signup/controller/sign_up_controller.dart';
 import '../../screens/home_screen.dart';
+import '../../signup/sign_up_screen.dart';
 
 class LoginBodyScreen extends StatefulWidget {
   const LoginBodyScreen({Key? key}) : super(key: key);
@@ -213,33 +214,34 @@ class _LoginBodyScreenState extends State<LoginBodyScreen> {
                                           onPressed: _loginButtonPressed,
                                         ),
                                       )),
-                                TextButton(
-                                  onPressed: () {
-                                    Get.to(
-                                      () => const SignUpScreen(),
-                                      transition: Transition.fadeIn,
-                                      duration:
-                                          const Duration(milliseconds: 500),
-                                    );
-                                  },
-                                  child: RichText(
-                                    text: TextSpan(
-                                      text: 'アカウントをお持ちでない方は',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        color: HexColor("#8d8d8d"),
+
+                                // 新規登録への動線を追加
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 10),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'アカウントをお持ちでない方は',
+                                        style: GoogleFonts.poppins(
+                                          color: HexColor("#8d8d8d"),
+                                          fontSize: 14,
+                                        ),
                                       ),
-                                      children: [
-                                        TextSpan(
-                                          text: ' 新規登録',
+                                      TextButton(
+                                        onPressed: () {
+                                          Get.to(() => const SignUpScreen());
+                                        },
+                                        child: Text(
+                                          '新規登録',
                                           style: GoogleFonts.poppins(
-                                            fontSize: 14,
                                             color: HexColor("#44564a"),
+                                            fontSize: 14,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],

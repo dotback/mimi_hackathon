@@ -13,7 +13,7 @@ import 'cognitive_test_screen.dart';
 import 'daily_problem_screen.dart';
 import 'user_profile_screen.dart';
 import '../services/auth_service.dart';
-import 'login_screen.dart';
+import '../login/login_screen.dart';
 import '../services/gemini_service.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
@@ -87,8 +87,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // メールアドレスの読み込みを最初に実行
     _loadUserEmail().then((_) {
-      // ユーザープロファイルと認知機能テスト結果の取得
       _initializeData();
+
+      // ToDoリストをローカルストレージから読み込む
+      _loadTodoListFromLocalStorage();
 
       // 初期テスト結果がある場合は保存する
       if (Get.arguments != null && Get.arguments['initialTestResult'] != null) {
@@ -260,15 +262,6 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: () {
           Get.back();
           Get.to(() => const UserProfileScreen());
-        },
-      ),
-      ListTile(
-        leading: const Icon(Icons.list),
-        title: const Text('テスト結果'),
-        onTap: () {
-          Get.back();
-          // TODO: テスト結果画面への遷移を実装
-          _showSuccessSnackBar('テスト結果画面は準備中です');
         },
       ),
       ListTile(
@@ -923,6 +916,28 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  // ToDoリストをローカルストレージから読み込むメソッド
+  Future<void> _loadTodoListFromLocalStorage() async {
+    try {
+      final todoList = await _geminiService.getLocalTodoList();
+
+      // ToDoリストを更新（completedフィールドを追加）
+      final updatedTodoList = todoList
+          .map((todo) => {
+                ...todo,
+                'completed': todo['completed'] ?? false,
+                'icon': _getIconForTodo(todo['title'] ?? ''),
+              })
+          .toList();
+
+      setState(() {
+        _todoList = updatedTodoList;
+      });
+    } catch (e) {
+      print('ToDoリストの読み込み中にエラーが発生しました: $e');
+    }
   }
 
   @override
