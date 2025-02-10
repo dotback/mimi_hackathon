@@ -98,8 +98,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
     await _apiService.updateUserProfile(user);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('プロフィールを保存しました')),
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('プロフィール更新'),
+        content: const Text('プロフィールが正常に更新されました。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 

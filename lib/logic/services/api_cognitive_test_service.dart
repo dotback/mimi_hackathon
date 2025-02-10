@@ -35,7 +35,6 @@ class ApiCognitiveTestService {
       // ローカルストレージから履歴を取得
       return await getLocalCognitiveTestHistories();
     } catch (e) {
-      print('テスト履歴取得中にエラーが発生しました: $e');
       return [];
     }
   }
@@ -70,7 +69,6 @@ class ApiCognitiveTestService {
       await prefs.setString(
           'local_cognitive_test_date', DateTime.now().toIso8601String());
     } catch (e) {
-      print('ローカルストレージへの保存中にエラーが発生しました: $e');
       throw Exception('ローカルデータの保存に失敗しました');
     }
   }
@@ -92,7 +90,6 @@ class ApiCognitiveTestService {
       }
       return null;
     } catch (e) {
-      print('ローカルストレージからの読み取り中にエラーが発生しました: $e');
       return null;
     }
   }
@@ -109,7 +106,6 @@ class ApiCognitiveTestService {
       }
       return [];
     } catch (e) {
-      print('テスト履歴の取得中にエラーが発生しました: $e');
       return [];
     }
   }

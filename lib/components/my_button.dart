@@ -18,8 +18,6 @@ class MyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('Button Color: ${buttonColor ?? "デフォルト"}');
-    print('Text Color: ${textColor ?? "デフォルト"}');
     return ElevatedButton(
       onPressed: onPressed,
       style: ButtonStyle(

@@ -22,21 +22,14 @@ void main() async {
 
   // 詳細なエラーロギングを追加
   FlutterError.onError = (FlutterErrorDetails details) {
-    print('Flutter Framework Error: ${details.exception}');
-    print('Stack Trace: ${details.stack}');
     FlutterError.dumpErrorToConsole(details);
   };
 
   // Firebase初期化
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
-    print('Firebase初期化成功');
-  } catch (e) {
-    print('Firebase初期化エラー: $e');
-  }
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
 
   Get.put<String>(Env.geminiApiKey, tag: 'geminiApiKey');
 
@@ -45,8 +38,6 @@ void main() async {
 
   // グローバルエラーハンドリング
   PlatformDispatcher.instance.onError = (error, stack) {
-    print('キャッチされていないエラー: $error');
-    print('スタックトレース: $stack');
     return true;
   };
 
@@ -63,10 +54,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('MyAppのビルド開始');
-
     return GetMaterialApp(
-      title: 'みんなの認知機能アプリ',
+      title: 'MiMi',
       debugShowCheckedModeBanner: false,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

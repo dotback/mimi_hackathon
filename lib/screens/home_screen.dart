@@ -115,8 +115,6 @@ class _HomeScreenState extends State<HomeScreen> {
       final currentUser = firebase_auth.FirebaseAuth.instance.currentUser;
       final userId = currentUser?.uid ?? 'dummy_user_id';
 
-      print('フェッチするユーザーID: $userId'); // デバッグログ
-
       // ユーザープロファイルを取得
       try {
         final fetchedUser = await _apiService.fetchUserProfile();
@@ -125,8 +123,6 @@ class _HomeScreenState extends State<HomeScreen> {
           _user = fetchedUser;
         });
       } catch (fetchError) {
-        print('ユーザープロファイルのフェッチ中のエラー: $fetchError');
-
         // デフォルトユーザーを設定
         setState(() {
           _user = local_user.User(
@@ -144,8 +140,6 @@ class _HomeScreenState extends State<HomeScreen> {
       // 認知機能テスト結果を取得
       await _fetchCognitiveTestResult();
     } catch (e) {
-      print('データ初期化中の包括的エラー: $e');
-
       // エラー時のフォールバック
       setState(() {
         _user = local_user.User(
@@ -196,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
         };
       });
 
-      _showSuccessSnackBar('認知機能テスト結果: スコア ${initialTestResult['score']} / 10');
+      _showSuccessSnackBar('認知機能テスト結果: スコア ${initialTestResult['score']}');
     } catch (e) {
       _showErrorSnackBar('テスト結果の保存に失敗しました: $e');
     }
@@ -361,7 +355,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 subtitle: Text(
-                  '${activity['date']} - スコア: ${activity['score']}/10',
+                  '${activity['date']} - スコア: ${activity['score']}',
                   style: TextStyle(color: Colors.grey.shade600),
                 ),
               ),
@@ -564,7 +558,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'スコア: ${_cognitiveTestResult?['score'] ?? 'N/A'} / 10',
+                  'スコア: ${_cognitiveTestResult?['score'] ?? 'N/A'}',
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 Text(
@@ -770,21 +764,15 @@ class _HomeScreenState extends State<HomeScreen> {
       final prefs = await SharedPreferences.getInstance();
       final storedEmail = prefs.getString('user_email');
 
-      print('SharedPreferencesから読み込まれたメールアドレス: $storedEmail');
-
       // ログイン中のユーザーのメールアドレスを取得
       final currentUser = firebase_auth.FirebaseAuth.instance.currentUser;
       final userEmail = currentUser?.email;
 
-      print('現在ログイン中のユーザーのメールアドレス: $userEmail');
-
       setState(() {
         // 優先順位: 1. ログイン中のユーザーのメールアドレス 2. SharedPreferencesに保存されたメールアドレス 3. ゲストユーザー
         _userEmail = userEmail ?? storedEmail ?? 'ゲストユーザー';
-        print('最終的に設定されたメールアドレス: $_userEmail');
       });
     } catch (e) {
-      print('メールアドレス読み込み中のエラー: $e');
       setState(() {
         _userEmail = 'ゲストユーザー';
       });
@@ -823,7 +811,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // ローカルストレージから明示的にToDoリストを取得
       final todoList = await _geminiService.getLocalTodoList();
-      print('取得したToDoリスト: $todoList'); // デバッグ用のログ出力
 
       // ToDoリストを更新（completedフィールドを追加）
       final updatedTodoList = todoList
@@ -936,7 +923,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _todoList = updatedTodoList;
       });
     } catch (e) {
-      print('ToDoリストの読み込み中にエラーが発生しました: $e');
+      // エラーハンドリング
     }
   }
 

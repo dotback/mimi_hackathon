@@ -74,30 +74,24 @@ class SpeechService {
   }) async {
     // マイクの権限を確認
     var micStatus = await Permission.microphone.request();
-    debugPrint('マイク権限の状態: $micStatus');
 
     if (micStatus != PermissionStatus.granted) {
-      debugPrint('マイク権限が拒否されました');
       return null;
     }
 
     // 音声認識の初期化
     bool available = await _speechToText.initialize(
       onStatus: (status) {
-        debugPrint('音声認識ステータス: $status');
         if (status == 'listening') {
           onSpeechStart?.call();
         } else if (status == 'notListening') {
           onSpeechEnd?.call();
         }
       },
-      onError: (error) {
-        debugPrint('音声認識エラー: ${error.errorMsg}');
-      },
+      onError: (error) {},
     );
 
     if (!available) {
-      debugPrint('音声認識が利用できません');
       return null;
     }
 
@@ -107,9 +101,6 @@ class SpeechService {
 
     _speechToText.listen(
       onResult: (result) {
-        debugPrint('音声認識結果: ${result.recognizedWords}');
-        debugPrint('最終結果: ${result.finalResult}');
-
         final currentWords = result.recognizedWords.trim();
 
         // 部分的な結果のコールバックを追加
@@ -126,9 +117,7 @@ class SpeechService {
         if (result.finalResult) {
           if (recognizedText.isNotEmpty) {
             completer.complete(recognizedText);
-          } else {
-            debugPrint('認識された言葉が空です');
-          }
+          } else {}
         }
       },
       localeId: 'ja-JP',
@@ -139,7 +128,6 @@ class SpeechService {
     // タイムアウト設定
     Future.delayed(timeout, () {
       if (!completer.isCompleted) {
-        debugPrint('音声認識がタイムアウトしました');
         _speechToText.stop();
 
         // タイムアウト時に部分的に認識されたテキストがあれば返す
@@ -153,10 +141,8 @@ class SpeechService {
 
     try {
       final result = await completer.future;
-      debugPrint('最終的に認識されたテキスト: $result');
       return result;
     } catch (e) {
-      debugPrint('音声認識エラー: $e');
       return null;
     } finally {
       onSpeechEnd?.call();
@@ -168,12 +154,11 @@ class SpeechService {
     try {
       // 音声認識の初期化
       bool available = await _speechToText.initialize(
-        onStatus: (status) => debugPrint('音声認識ステータス: $status'),
-        onError: (error) => debugPrint('音声認識エラー: ${error.errorMsg}'),
+        onStatus: (status) => {},
+        onError: (error) {},
       );
 
       if (!available) {
-        debugPrint('音声認識が利用できません');
         return null;
       }
 
@@ -204,14 +189,11 @@ class SpeechService {
 
       try {
         final result = await completer.future;
-        debugPrint('音声認識結果: $result');
         return result;
       } catch (e) {
-        debugPrint('音声認識エラー: $e');
         return null;
       }
     } catch (e) {
-      debugPrint('音声ファイル文字起こしエラー: $e');
       return null;
     }
   }
@@ -220,14 +202,8 @@ class SpeechService {
   Future<AnswerEvaluation> evaluateAnswer(
       String question, String userAnswer) async {
     try {
-      // プロンプトをコンソールに詳細表示
-      print('===== Gemini API プロンプト =====');
-      print('質問: $question');
-      print('ユーザーの回答: $userAnswer');
-
       // 回答が空の場合の処理
       if (userAnswer.trim().isEmpty) {
-        debugPrint('警告: 回答が空です');
         return AnswerEvaluation(
           isCorrect: false,
           userAnswer: userAnswer,
@@ -275,7 +251,6 @@ class SpeechService {
       final response = await _generativeModel.generateContent(content).timeout(
         Duration(seconds: 60),
         onTimeout: () {
-          debugPrint('Gemini APIリクエストがタイムアウトしました');
           throw TimeoutException('Gemini APIのレスポンスがタイムアウトしました');
         },
       );
@@ -283,28 +258,13 @@ class SpeechService {
       // レスポンスからJSONを抽出
       final responseText = response.text ?? '';
 
-      // レスポンス全体をコンソールに詳細表示
-      print('===== Gemini API レスポンス =====');
-      print('完全なAPIレスポンス: $responseText');
-
       final jsonString = _extractJsonFromResponse(responseText);
-      print('抽出したJSONレスポンス: $jsonString');
 
       // JSONパースのエラーハンドリングを強化
       Map<String, dynamic> jsonMap;
       try {
         jsonMap = json.decode(jsonString);
-
-        // パースされたJSONをコンソールに表示
-        print('===== パースされたJSON =====');
-        print('isCorrect: ${jsonMap['isCorrect']}');
-        print('result: ${jsonMap['result']}');
-        print('improvements: ${jsonMap['improvements']}');
-        print('explanation: ${jsonMap['explanation']}');
       } catch (e) {
-        print('JSONパースエラー: $e');
-        print('パース失敗したJSON文字列: $jsonString');
-
         return AnswerEvaluation(
           isCorrect: false,
           userAnswer: userAnswer,
@@ -316,10 +276,6 @@ class SpeechService {
 
       return AnswerEvaluation.fromJson(jsonMap);
     } catch (e, stackTrace) {
-      print('===== エラー発生 =====');
-      print('Answer evaluation error: $e');
-      print('スタックトレース: $stackTrace');
-
       return AnswerEvaluation(
         isCorrect: false,
         userAnswer: userAnswer,
@@ -355,13 +311,9 @@ class SpeechService {
         }
       }
 
-      // デバッグ用のログ出力
-      print('有効なJSONが見つかりませんでした。元のレスポンス: $response');
-
       return '{}';
     } catch (e) {
       // エラーハンドリング
-      print('JSON抽出中にエラーが発生しました: $e');
       return '{}';
     }
   }
@@ -375,7 +327,6 @@ class SpeechService {
   // マイク権限の確認メソッドを追加
   Future<bool> checkMicPermission() async {
     var micStatus = await Permission.microphone.request();
-    debugPrint('マイク権限の状態: $micStatus');
     return micStatus == PermissionStatus.granted;
   }
 }

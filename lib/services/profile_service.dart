@@ -15,9 +15,6 @@ class ProfileService {
       );
 
       if (response.statusCode == 200) {
-        // レスポンスの内容をデバッグ出力
-        print('APIレスポンス: ${response.body}');
-
         // APIレスポンスをパース
         final Map<String, dynamic> data = json.decode(response.body);
 
@@ -35,12 +32,9 @@ class ProfileService {
           email: _extractValue(data, ['email'], 'guest@example.com'),
         );
       } else {
-        // エラーレスポンスの詳細を出力
-        print('エラーレスポンス: ${response.statusCode} - ${response.body}');
         throw Exception('プロフィール情報の取得に失敗しました: ${response.statusCode}');
       }
     } catch (e) {
-      print('フェッチ中のエラー: $e');
       rethrow;
     }
   }
@@ -67,7 +61,22 @@ class ProfileService {
     return 0.0;
   }
 
+<<<<<<< HEAD
   // 年齢を安全に計算
+=======
+  // 生年月日を安全にパース
+  DateTime _parseBirthday(String? birthDateString) {
+    if (birthDateString == null || birthDateString.isEmpty)
+      return DateTime.now();
+
+    try {
+      return DateTime.parse(birthDateString);
+    } catch (e) {
+      return DateTime.now();
+    }
+  }
+
+>>>>>>> adc65a5e1359de911c3cc4c5934af2b48ca4cb54
   int _calculateAge(String? birthDateString) {
     if (birthDateString == null || birthDateString.isEmpty) return 0;
 
@@ -83,7 +92,6 @@ class ProfileService {
 
       return age;
     } catch (e) {
-      print('年齢計算エラー: $e');
       return 0;
     }
   }

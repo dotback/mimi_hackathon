@@ -41,7 +41,6 @@ class ApiService {
       );
       return response.statusCode == 200;
     } catch (e) {
-      print('ネットワーク接続エラー: $e');
       return false;
     }
   }

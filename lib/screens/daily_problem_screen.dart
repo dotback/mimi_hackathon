@@ -156,8 +156,6 @@ class _DailyProblemScreenState extends State<DailyProblemScreen> {
 
       return problems;
     } catch (e) {
-      print('問題の読み込み中にエラーが発生しました: $e');
-
       // エラー時のデフォルト問題（画像問題を含む）
       return [
         Problem(
