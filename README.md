@@ -8,7 +8,7 @@
 
 ## ローカルでのセットアップ
 自前に下記レポジトリのfirebaseのemulatorを起動しておく  
-https://github.com/dotback/mimi_hackathon
+https://github.com/dotback/mimi_hackathon_api_server
 
 ```
 $ cp .env.sample .env
@@ -78,13 +78,6 @@ mimi/
 - **`assets/`**: 画像、フォント、その他の静的リソース
 
 - **`.env`**: 環境変数の設定
-
-## 注意点
-
-- **ローカルストレージのみ**: 現在のバージョンはサーバー接続を完全に無効化
-- すべてのデータは端末内の Shared Preferences に保存
-- テスト結果は最新の 10 件のみ保持
-- バックアップや同期機能は現在利用できません
 
 ## 将来の開発予定
 
